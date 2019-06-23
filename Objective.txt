@@ -25,3 +25,6 @@ Can you measure the magnetic interactions between a pair of atoms?
 ＜データ＞
 原子のタイプやカップリングタイプからscalar coupling constantを予測する。
 csvいろいろ。
+
+＜Githubとの連携＞
+あいうえお
