@@ -3,6 +3,8 @@
 
 ### Python ###
 pycache/
+src/__pycache__/
+src/draft.py
 
 
 ### Jupyter Notebook ###
