@@ -1,5 +1,4 @@
 import artgor_utils
-import numpy as np
 import pandas as pd
 import utils
 from sklearn.model_selection import KFold

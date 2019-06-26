@@ -9,7 +9,7 @@ def map_atom_info(df, structures, atom_idx):
                   right_on=['molecule_name', 'atom_index'])
 
     df = df.drop('atom_index', axis=1)
-    
+
     df = df.rename(columns={
         'atom': f'atom_{atom_idx}',
         'x': f'x_{atom_idx}',
@@ -32,7 +32,6 @@ def calc_dist(df):
     df['dist_z'] = (df['z_0'] - df['z_1']) ** 2
 
     return df
-
 
 
 def create_features(df):
@@ -203,12 +202,12 @@ def get_good_columns():
 
 
 def get_atom_rad_en(structures):
-    atomic_radius = {'H':0.38, 'C':0.77, 'N':0.75, 'O':0.73, 'F':0.71}
+    atomic_radius = {'H': 0.38, 'C': 0.77, 'N': 0.75, 'O': 0.73, 'F': 0.71}
 
     fudge_factor = 0.05
-    atomic_radius = {k:v + fudge_factor for k,v in atomic_radius.items()}
+    atomic_radius = {k: v + fudge_factor for k, v in atomic_radius.items()}
 
-    electronegativity = {'H':2.2, 'C':2.55, 'N':3.04, 'O':3.44, 'F':3.98}
+    electronegativity = {'H': 2.2, 'C': 2.55, 'N': 3.04, 'O': 3.44, 'F': 3.98}
 
     atoms = structures['atom'].values
     atoms_en = [electronegativity[x] for x in atoms]
@@ -242,7 +241,7 @@ def calc_bonds(structures):
         m_compare = np.roll(m_compare, -1, axis=0)
         r_compare = np.roll(r_compare, -1, axis=0)
 
-        #Are we still comparing atoms in the same molecule?
+        # Are we still comparing atoms in the same molecule?
         mask = np.where(m == m_compare, 1, 0)
 
         dists = np.linalg.norm(p - p_compare, axis=1) * mask
@@ -253,13 +252,13 @@ def calc_bonds(structures):
         source_row = source_row
         target_row = source_row + i + 1
         target_row = np.where(
-            np.logical_or(target_row > len(structures), mask==0),
+            np.logical_or(target_row > len(structures), mask == 0),
             len(structures), target_row)
 
         source_atom = i_atom
         target_atom = i_atom + i + 1
         target_atom = np.where(
-            np.logical_or(target_atom > max_atoms, mask==0),
+            np.logical_or(target_atom > max_atoms, mask == 0),
             max_atoms, target_atom)
 
         bonds[(source_row, target_atom)] = bond
@@ -274,12 +273,22 @@ def calc_bonds(structures):
 
     print('Counting and condensing bonds')
 
-    bonds_numeric = [[i for i,x in enumerate(row) if x] for row in tqdm(bonds)]
-    bond_lengths = [[dist for i,dist in enumerate(row) if i in bonds_numeric[j]] for j,row in enumerate(tqdm(bond_dists))]
-    bond_lengths_mean = [ np.mean(x) for x in bond_lengths]
+    bonds_numeric = [
+        [i for i, x in enumerate(row) if x]
+        for row in tqdm(bonds)
+    ]
+    bond_lengths = [
+        [dist for i, dist in enumerate(row) if i in bonds_numeric[j]]
+        for j, row in enumerate(tqdm(bond_dists))
+    ]
+
+    bond_lengths_mean = [np.mean(x) for x in bond_lengths]
+    bond_lengths_std = [np.std(x) for x in bond_lengths]
     n_bonds = [len(x) for x in bonds_numeric]
 
-    bond_data = {'n_bonds':n_bonds, 'bond_lengths_mean': bond_lengths_mean }
+    bond_data = {'n_bonds': n_bonds,
+                 'bond_lengths_mean': bond_lengths_mean,
+                 'bond_lengths_std': bond_lengths_std}
     bond_df = pd.DataFrame(bond_data)
     structures = structures.join(bond_df)
 
