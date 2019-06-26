@@ -4,228 +4,228 @@ from tqdm import tqdm
 
 
 def map_atom_info(df, structures, atom_idx):
-    df = pd.merge(df, structures, how='left',
-                  left_on=['molecule_name', f'atom_index_{atom_idx}'],
-                  right_on=['molecule_name', 'atom_index'])
+    df = pd.merge(df, structures, how="left",
+                  left_on=["molecule_name", f"atom_index_{atom_idx}"],
+                  right_on=["molecule_name", "atom_index"])
 
-    df = df.drop('atom_index', axis=1)
+    df = df.drop("atom_index", axis=1)
 
     df = df.rename(columns={
-        'atom': f'atom_{atom_idx}',
-        'x': f'x_{atom_idx}',
-        'y': f'y_{atom_idx}',
-        'z': f'z_{atom_idx}',
-        'n_bonds': f'n_bonds_{atom_idx}',
-        'bond_lengths_mean': f'bonds_length_mean_{atom_idx}'
+        "atom": f"atom_{atom_idx}",
+        "x": f"x_{atom_idx}",
+        "y": f"y_{atom_idx}",
+        "z": f"z_{atom_idx}",
+        "n_bonds": f"n_bonds_{atom_idx}",
+        "bond_lengths_mean": f"bonds_length_mean_{atom_idx}"
         })
 
     return df
 
 
 def calc_dist(df):
-    df_p_0 = df[['x_0', 'y_0', 'z_0']].values
-    df_p_1 = df[['x_1', 'y_1', 'z_1']].values
+    df_p_0 = df[["x_0", "y_0", "z_0"]].values
+    df_p_1 = df[["x_1", "y_1", "z_1"]].values
 
-    df['dist'] = np.linalg.norm(df_p_0 - df_p_1, axis=1)
-    df['dist_x'] = (df['x_0'] - df['x_1']) ** 2
-    df['dist_y'] = (df['y_0'] - df['y_1']) ** 2
-    df['dist_z'] = (df['z_0'] - df['z_1']) ** 2
+    df["dist"] = np.linalg.norm(df_p_0 - df_p_1, axis=1)
+    df["dist_x"] = (df["x_0"] - df["x_1"]) ** 2
+    df["dist_y"] = (df["y_0"] - df["y_1"]) ** 2
+    df["dist_z"] = (df["z_0"] - df["z_1"]) ** 2
 
     return df
 
 
 def create_features(df):
-    df['molecule_couples'] = \
-        df.groupby('molecule_name')['id'].transform('count')
-    df['molecule_dist_mean'] = \
-        df.groupby('molecule_name')['dist'].transform('mean')
-    df['molecule_dist_min'] = \
-        df.groupby('molecule_name')['dist'].transform('min')
-    df['molecule_dist_max'] = \
-        df.groupby('molecule_name')['dist'].transform('max')
-    df['atom_0_couples_count'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['id'].transform('count')
-    df['atom_1_couples_count'] = \
-        df.groupby(['molecule_name', 'atom_index_1'])['id'].transform('count')
+    df["molecule_couples"] = \
+        df.groupby("molecule_name")["id"].transform("count")
+    df["molecule_dist_mean"] = \
+        df.groupby("molecule_name")["dist"].transform("mean")
+    df["molecule_dist_min"] = \
+        df.groupby("molecule_name")["dist"].transform("min")
+    df["molecule_dist_max"] = \
+        df.groupby("molecule_name")["dist"].transform("max")
+    df["atom_0_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["id"].transform("count")
+    df["atom_1_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
 
-    df[f'molecule_atom_index_0_x_1_std'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['x_1'].transform('std')
-    df[f'molecule_atom_index_0_y_1_mean'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['y_1'].transform('mean')
-    df[f'molecule_atom_index_0_y_1_mean_diff'] = \
-        df[f'molecule_atom_index_0_y_1_mean'] - df['y_1']
-    df[f'molecule_atom_index_0_y_1_mean_div'] = \
-        df[f'molecule_atom_index_0_y_1_mean'] / df['y_1']
-    df[f'molecule_atom_index_0_y_1_max'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['y_1'].transform('max')
-    df[f'molecule_atom_index_0_y_1_max_diff'] = \
-        df[f'molecule_atom_index_0_y_1_max'] - df['y_1']
-    df[f'molecule_atom_index_0_y_1_std'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['y_1'].transform('std')
-    df[f'molecule_atom_index_0_z_1_std'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['z_1'].transform('std')
-    df[f'molecule_atom_index_0_dist_mean'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['dist'].transform('mean')
-    df[f'molecule_atom_index_0_dist_mean_diff'] = \
-        df[f'molecule_atom_index_0_dist_mean'] - df['dist']
-    df[f'molecule_atom_index_0_dist_mean_div'] = \
-        df[f'molecule_atom_index_0_dist_mean'] / df['dist']
-    df[f'molecule_atom_index_0_dist_max'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['dist'].transform('max')
-    df[f'molecule_atom_index_0_dist_max_diff'] = \
-        df[f'molecule_atom_index_0_dist_max'] - df['dist']
-    df[f'molecule_atom_index_0_dist_max_div'] = \
-        df[f'molecule_atom_index_0_dist_max'] / df['dist']
-    df[f'molecule_atom_index_0_dist_min'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['dist'].transform('min')
-    df[f'molecule_atom_index_0_dist_min_diff'] = \
-        df[f'molecule_atom_index_0_dist_min'] - df['dist']
-    df[f'molecule_atom_index_0_dist_min_div'] = \
-        df[f'molecule_atom_index_0_dist_min'] / df['dist']
-    df[f'molecule_atom_index_0_dist_std'] = \
-        df.groupby(['molecule_name', 'atom_index_0'])['dist'].transform('std')
-    df[f'molecule_atom_index_0_dist_std_diff'] = \
-        df[f'molecule_atom_index_0_dist_std'] - df['dist']
-    df[f'molecule_atom_index_0_dist_std_div'] = \
-        df[f'molecule_atom_index_0_dist_std'] / df['dist']
-    df[f'molecule_atom_index_1_dist_mean'] = \
-        df.groupby(['molecule_name', 'atom_index_1'])['dist'].transform('mean')
-    df[f'molecule_atom_index_1_dist_mean_diff'] = \
-        df[f'molecule_atom_index_1_dist_mean'] - df['dist']
-    df[f'molecule_atom_index_1_dist_mean_div'] = \
-        df[f'molecule_atom_index_1_dist_mean'] / df['dist']
-    df[f'molecule_atom_index_1_dist_max'] = \
-        df.groupby(['molecule_name', 'atom_index_1'])['dist'].transform('max')
-    df[f'molecule_atom_index_1_dist_max_diff'] = \
-        df[f'molecule_atom_index_1_dist_max'] - df['dist']
-    df[f'molecule_atom_index_1_dist_max_div'] = \
-        df[f'molecule_atom_index_1_dist_max'] / df['dist']
-    df[f'molecule_atom_index_1_dist_min'] = \
-        df.groupby(['molecule_name', 'atom_index_1'])['dist'].transform('min')
-    df[f'molecule_atom_index_1_dist_min_diff'] = \
-        df[f'molecule_atom_index_1_dist_min'] - df['dist']
-    df[f'molecule_atom_index_1_dist_min_div'] = \
-        df[f'molecule_atom_index_1_dist_min'] / df['dist']
-    df[f'molecule_atom_index_1_dist_std'] = \
-        df.groupby(['molecule_name', 'atom_index_1'])['dist'].transform('std')
-    df[f'molecule_atom_index_1_dist_std_diff'] = \
-        df[f'molecule_atom_index_1_dist_std'] - df['dist']
-    df[f'molecule_atom_index_1_dist_std_div'] = \
-        df[f'molecule_atom_index_1_dist_std'] / df['dist']
-    df[f'molecule_atom_1_dist_mean'] = \
-        df.groupby(['molecule_name', 'atom_1'])['dist'].transform('mean')
-    df[f'molecule_atom_1_dist_min'] = \
-        df.groupby(['molecule_name', 'atom_1'])['dist'].transform('min')
-    df[f'molecule_atom_1_dist_min_diff'] = \
-        df[f'molecule_atom_1_dist_min'] - df['dist']
-    df[f'molecule_atom_1_dist_min_div'] = \
-        df[f'molecule_atom_1_dist_min'] / df['dist']
-    df[f'molecule_atom_1_dist_std'] = \
-        df.groupby(['molecule_name', 'atom_1'])['dist'].transform('std')
-    df[f'molecule_atom_1_dist_std_diff'] = \
-        df[f'molecule_atom_1_dist_std'] - df['dist']
-    df[f'molecule_type_0_dist_std'] = \
-        df.groupby(['molecule_name', 'type_0'])['dist'].transform('std')
-    df[f'molecule_type_0_dist_std_diff'] = \
-        df[f'molecule_type_0_dist_std'] - df['dist']
-    df[f'molecule_type_dist_mean'] = \
-        df.groupby(['molecule_name', 'type'])['dist'].transform('mean')
-    df[f'molecule_type_dist_mean_diff'] = \
-        df[f'molecule_type_dist_mean'] - df['dist']
-    df[f'molecule_type_dist_mean_div'] = \
-        df[f'molecule_type_dist_mean'] / df['dist']
-    df[f'molecule_type_dist_max'] = \
-        df.groupby(['molecule_name', 'type'])['dist'].transform('max')
-    df[f'molecule_type_dist_min'] = \
-        df.groupby(['molecule_name', 'type'])['dist'].transform('min')
-    df[f'molecule_type_dist_std'] = \
-        df.groupby(['molecule_name', 'type'])['dist'].transform('std')
-    df[f'molecule_type_dist_std_diff'] = \
-        df[f'molecule_type_dist_std'] - df['dist']
+    df[f"molecule_atom_index_0_x_1_std"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["x_1"].transform("std")
+    df[f"molecule_atom_index_0_y_1_mean"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("mean")
+    df[f"molecule_atom_index_0_y_1_mean_diff"] = \
+        df[f"molecule_atom_index_0_y_1_mean"] - df["y_1"]
+    df[f"molecule_atom_index_0_y_1_mean_div"] = \
+        df[f"molecule_atom_index_0_y_1_mean"] / df["y_1"]
+    df[f"molecule_atom_index_0_y_1_max"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("max")
+    df[f"molecule_atom_index_0_y_1_max_diff"] = \
+        df[f"molecule_atom_index_0_y_1_max"] - df["y_1"]
+    df[f"molecule_atom_index_0_y_1_std"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("std")
+    df[f"molecule_atom_index_0_z_1_std"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["z_1"].transform("std")
+    df[f"molecule_atom_index_0_dist_mean"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("mean")
+    df[f"molecule_atom_index_0_dist_mean_diff"] = \
+        df[f"molecule_atom_index_0_dist_mean"] - df["dist"]
+    df[f"molecule_atom_index_0_dist_mean_div"] = \
+        df[f"molecule_atom_index_0_dist_mean"] / df["dist"]
+    df[f"molecule_atom_index_0_dist_max"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("max")
+    df[f"molecule_atom_index_0_dist_max_diff"] = \
+        df[f"molecule_atom_index_0_dist_max"] - df["dist"]
+    df[f"molecule_atom_index_0_dist_max_div"] = \
+        df[f"molecule_atom_index_0_dist_max"] / df["dist"]
+    df[f"molecule_atom_index_0_dist_min"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("min")
+    df[f"molecule_atom_index_0_dist_min_diff"] = \
+        df[f"molecule_atom_index_0_dist_min"] - df["dist"]
+    df[f"molecule_atom_index_0_dist_min_div"] = \
+        df[f"molecule_atom_index_0_dist_min"] / df["dist"]
+    df[f"molecule_atom_index_0_dist_std"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("std")
+    df[f"molecule_atom_index_0_dist_std_diff"] = \
+        df[f"molecule_atom_index_0_dist_std"] - df["dist"]
+    df[f"molecule_atom_index_0_dist_std_div"] = \
+        df[f"molecule_atom_index_0_dist_std"] / df["dist"]
+    df[f"molecule_atom_index_1_dist_mean"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("mean")
+    df[f"molecule_atom_index_1_dist_mean_diff"] = \
+        df[f"molecule_atom_index_1_dist_mean"] - df["dist"]
+    df[f"molecule_atom_index_1_dist_mean_div"] = \
+        df[f"molecule_atom_index_1_dist_mean"] / df["dist"]
+    df[f"molecule_atom_index_1_dist_max"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("max")
+    df[f"molecule_atom_index_1_dist_max_diff"] = \
+        df[f"molecule_atom_index_1_dist_max"] - df["dist"]
+    df[f"molecule_atom_index_1_dist_max_div"] = \
+        df[f"molecule_atom_index_1_dist_max"] / df["dist"]
+    df[f"molecule_atom_index_1_dist_min"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("min")
+    df[f"molecule_atom_index_1_dist_min_diff"] = \
+        df[f"molecule_atom_index_1_dist_min"] - df["dist"]
+    df[f"molecule_atom_index_1_dist_min_div"] = \
+        df[f"molecule_atom_index_1_dist_min"] / df["dist"]
+    df[f"molecule_atom_index_1_dist_std"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("std")
+    df[f"molecule_atom_index_1_dist_std_diff"] = \
+        df[f"molecule_atom_index_1_dist_std"] - df["dist"]
+    df[f"molecule_atom_index_1_dist_std_div"] = \
+        df[f"molecule_atom_index_1_dist_std"] / df["dist"]
+    df[f"molecule_atom_1_dist_mean"] = \
+        df.groupby(["molecule_name", "atom_1"])["dist"].transform("mean")
+    df[f"molecule_atom_1_dist_min"] = \
+        df.groupby(["molecule_name", "atom_1"])["dist"].transform("min")
+    df[f"molecule_atom_1_dist_min_diff"] = \
+        df[f"molecule_atom_1_dist_min"] - df["dist"]
+    df[f"molecule_atom_1_dist_min_div"] = \
+        df[f"molecule_atom_1_dist_min"] / df["dist"]
+    df[f"molecule_atom_1_dist_std"] = \
+        df.groupby(["molecule_name", "atom_1"])["dist"].transform("std")
+    df[f"molecule_atom_1_dist_std_diff"] = \
+        df[f"molecule_atom_1_dist_std"] - df["dist"]
+    df[f"molecule_type_0_dist_std"] = \
+        df.groupby(["molecule_name", "type_0"])["dist"].transform("std")
+    df[f"molecule_type_0_dist_std_diff"] = \
+        df[f"molecule_type_0_dist_std"] - df["dist"]
+    df[f"molecule_type_dist_mean"] = \
+        df.groupby(["molecule_name", "type"])["dist"].transform("mean")
+    df[f"molecule_type_dist_mean_diff"] = \
+        df[f"molecule_type_dist_mean"] - df["dist"]
+    df[f"molecule_type_dist_mean_div"] = \
+        df[f"molecule_type_dist_mean"] / df["dist"]
+    df[f"molecule_type_dist_max"] = \
+        df.groupby(["molecule_name", "type"])["dist"].transform("max")
+    df[f"molecule_type_dist_min"] = \
+        df.groupby(["molecule_name", "type"])["dist"].transform("min")
+    df[f"molecule_type_dist_std"] = \
+        df.groupby(["molecule_name", "type"])["dist"].transform("std")
+    df[f"molecule_type_dist_std_diff"] = \
+        df[f"molecule_type_dist_std"] - df["dist"]
 
     return df
 
 
 def get_good_columns():
     return [
-        'molecule_atom_index_0_dist_min',
-        'molecule_atom_index_0_dist_max',
-        'molecule_atom_index_1_dist_min',
-        'molecule_atom_index_0_dist_mean',
-        'molecule_atom_index_0_dist_std',
-        'dist',
-        'molecule_atom_index_1_dist_std',
-        'molecule_atom_index_1_dist_max',
-        'molecule_atom_index_1_dist_mean',
-        'molecule_atom_index_0_dist_max_diff',
-        'molecule_atom_index_0_dist_max_div',
-        'molecule_atom_index_0_dist_std_diff',
-        'molecule_atom_index_0_dist_std_div',
-        'atom_0_couples_count',
-        'molecule_atom_index_0_dist_min_div',
-        'molecule_atom_index_1_dist_std_diff',
-        'molecule_atom_index_0_dist_mean_div',
-        'atom_1_couples_count',
-        'molecule_atom_index_0_dist_mean_diff',
-        'molecule_couples',
-        'atom_index_1',
-        'molecule_dist_mean',
-        'molecule_atom_index_1_dist_max_diff',
-        'molecule_atom_index_0_y_1_std',
-        'molecule_atom_index_1_dist_mean_diff',
-        'molecule_atom_index_1_dist_std_div',
-        'molecule_atom_index_1_dist_mean_div',
-        'molecule_atom_index_1_dist_min_diff',
-        'molecule_atom_index_1_dist_min_div',
-        'molecule_atom_index_1_dist_max_div',
-        'molecule_atom_index_0_z_1_std',
-        'y_0',
-        'molecule_type_dist_std_diff',
-        'molecule_atom_1_dist_min_diff',
-        'molecule_atom_index_0_x_1_std',
-        'molecule_dist_min',
-        'molecule_atom_index_0_dist_min_diff',
-        'molecule_atom_index_0_y_1_mean_diff',
-        'molecule_type_dist_min',
-        'molecule_atom_1_dist_min_div',
-        'atom_index_0',
-        'molecule_dist_max',
-        'molecule_atom_1_dist_std_diff',
-        'molecule_type_dist_max',
-        'molecule_atom_index_0_y_1_max_diff',
-        'molecule_type_0_dist_std_diff',
-        'molecule_type_dist_mean_diff',
-        'molecule_atom_1_dist_mean',
-        'molecule_atom_index_0_y_1_mean_div',
-        'molecule_type_dist_mean_div',
-        'type']
+        "molecule_atom_index_0_dist_min",
+        "molecule_atom_index_0_dist_max",
+        "molecule_atom_index_1_dist_min",
+        "molecule_atom_index_0_dist_mean",
+        "molecule_atom_index_0_dist_std",
+        "dist",
+        "molecule_atom_index_1_dist_std",
+        "molecule_atom_index_1_dist_max",
+        "molecule_atom_index_1_dist_mean",
+        "molecule_atom_index_0_dist_max_diff",
+        "molecule_atom_index_0_dist_max_div",
+        "molecule_atom_index_0_dist_std_diff",
+        "molecule_atom_index_0_dist_std_div",
+        "atom_0_couples_count",
+        "molecule_atom_index_0_dist_min_div",
+        "molecule_atom_index_1_dist_std_diff",
+        "molecule_atom_index_0_dist_mean_div",
+        "atom_1_couples_count",
+        "molecule_atom_index_0_dist_mean_diff",
+        "molecule_couples",
+        "atom_index_1",
+        "molecule_dist_mean",
+        "molecule_atom_index_1_dist_max_diff",
+        "molecule_atom_index_0_y_1_std",
+        "molecule_atom_index_1_dist_mean_diff",
+        "molecule_atom_index_1_dist_std_div",
+        "molecule_atom_index_1_dist_mean_div",
+        "molecule_atom_index_1_dist_min_diff",
+        "molecule_atom_index_1_dist_min_div",
+        "molecule_atom_index_1_dist_max_div",
+        "molecule_atom_index_0_z_1_std",
+        "y_0",
+        "molecule_type_dist_std_diff",
+        "molecule_atom_1_dist_min_diff",
+        "molecule_atom_index_0_x_1_std",
+        "molecule_dist_min",
+        "molecule_atom_index_0_dist_min_diff",
+        "molecule_atom_index_0_y_1_mean_diff",
+        "molecule_type_dist_min",
+        "molecule_atom_1_dist_min_div",
+        "atom_index_0",
+        "molecule_dist_max",
+        "molecule_atom_1_dist_std_diff",
+        "molecule_type_dist_max",
+        "molecule_atom_index_0_y_1_max_diff",
+        "molecule_type_0_dist_std_diff",
+        "molecule_type_dist_mean_diff",
+        "molecule_atom_1_dist_mean",
+        "molecule_atom_index_0_y_1_mean_div",
+        "molecule_type_dist_mean_div",
+        "type"]
 
 
 def get_atom_rad_en(structures):
-    atomic_radius = {'H': 0.38, 'C': 0.77, 'N': 0.75, 'O': 0.73, 'F': 0.71}
+    atomic_radius = {"H": 0.38, "C": 0.77, "N": 0.75, "O": 0.73, "F": 0.71}
 
     fudge_factor = 0.05
     atomic_radius = {k: v + fudge_factor for k, v in atomic_radius.items()}
 
-    electronegativity = {'H': 2.2, 'C': 2.55, 'N': 3.04, 'O': 3.44, 'F': 3.98}
+    electronegativity = {"H": 2.2, "C": 2.55, "N": 3.04, "O": 3.44, "F": 3.98}
 
-    atoms = structures['atom'].values
+    atoms = structures["atom"].values
     atoms_en = [electronegativity[x] for x in atoms]
     atoms_rad = [atomic_radius[x] for x in atoms]
 
-    structures['EN'] = atoms_en
-    structures['rad'] = atoms_rad
+    structures["EN"] = atoms_en
+    structures["rad"] = atoms_rad
 
     return structures
 
 
 def calc_bonds(structures):
-    i_atom = structures['atom_index'].values
-    p = structures[['x', 'y', 'z']].values
+    i_atom = structures["atom_index"].values
+    p = structures[["x", "y", "z"]].values
     p_compare = p
-    m = structures['molecule_name'].values
+    m = structures["molecule_name"].values
     m_compare = m
-    r = structures['rad'].values
+    r = structures["rad"].values
     r_compare = r
 
     source_row = np.arange(len(structures))
@@ -234,7 +234,7 @@ def calc_bonds(structures):
     bonds = np.zeros((len(structures)+1, max_atoms+1), dtype=np.int8)
     bond_dists = np.zeros((len(structures)+1, max_atoms+1), dtype=np.float32)
 
-    print('Calculating bonds')
+    print("Calculating bonds")
 
     for i in tqdm(range(max_atoms-1)):
         p_compare = np.roll(p_compare, -1, axis=0)
@@ -271,7 +271,7 @@ def calc_bonds(structures):
     bond_dists = np.delete(bond_dists, axis=0, obj=-1)
     bond_dists = np.delete(bond_dists, axis=1, obj=-1)
 
-    print('Counting and condensing bonds')
+    print("Counting and condensing bonds")
 
     bonds_numeric = [
         [i for i, x in enumerate(row) if x]
@@ -286,9 +286,9 @@ def calc_bonds(structures):
     bond_lengths_std = [np.std(x) for x in bond_lengths]
     n_bonds = [len(x) for x in bonds_numeric]
 
-    bond_data = {'n_bonds': n_bonds,
-                 'bond_lengths_mean': bond_lengths_mean,
-                 'bond_lengths_std': bond_lengths_std}
+    bond_data = {"n_bonds": n_bonds,
+                 "bond_lengths_mean": bond_lengths_mean,
+                 "bond_lengths_std": bond_lengths_std}
     bond_df = pd.DataFrame(bond_data)
     structures = structures.join(bond_df)
 
