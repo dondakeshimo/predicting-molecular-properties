@@ -1,5 +1,5 @@
 """
-This script contains functions, which I'll use in my kernels.
+This script contains functions, which I"ll use in my kernels.
 
 """
 
@@ -29,7 +29,7 @@ def group_mean_log_mae(y_true, y_pred, types, floor=1e-9):
 
 
 def train_model_regression(
-        X, X_test, y, params, folds, model_type='lgb', eval_metric='mae',
+        X, X_test, y, params, folds, model_type="lgb", eval_metric="mae",
         columns=None, plot_feature_importance=False, model=None,
         verbose=10000, early_stopping_rounds=200, n_estimators=50000):
     """
@@ -55,15 +55,15 @@ def train_model_regression(
 
     # to set up scoring parameters
     metrics_dict = {
-        'mae': {'lgb_metric_name': 'mae',
-                'catboost_metric_name': 'MAE',
-                'sklearn_scoring_function': metrics.mean_absolute_error},
-        'group_mae': {'lgb_metric_name': 'mae',
-                      'catboost_metric_name': 'MAE',
-                      'scoring_function': group_mean_log_mae},
-        'mse': {'lgb_metric_name': 'mse',
-                'catboost_metric_name': 'MSE',
-                'sklearn_scoring_function': metrics.mean_squared_error}
+        "mae": {"lgb_metric_name": "mae",
+                "catboost_metric_name": "MAE",
+                "sklearn_scoring_function": metrics.mean_absolute_error},
+        "group_mae": {"lgb_metric_name": "mae",
+                      "catboost_metric_name": "MAE",
+                      "scoring_function": group_mean_log_mae},
+        "mse": {"lgb_metric_name": "mse",
+                "catboost_metric_name": "MSE",
+                "sklearn_scoring_function": metrics.mean_squared_error}
     }
 
     result_dict = {}
@@ -80,7 +80,7 @@ def train_model_regression(
 
     # split and train on folds
     for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
-        print(f'Fold {fold_n + 1} started at {time.ctime()}')
+        print(f"Fold {fold_n + 1} started at {time.ctime()}")
         if type(X) == np.ndarray:
             X_train, X_valid = X[columns][train_index], X[columns][valid_index]
             y_train, y_valid = y[train_index], y[valid_index]
@@ -89,26 +89,26 @@ def train_model_regression(
                 X[columns].iloc[train_index], X[columns].iloc[valid_index]
             y_train, y_valid = y.iloc[train_index], y.iloc[valid_index]
 
-        if model_type == 'lgb':
+        if model_type == "lgb":
             model = lgb.LGBMRegressor(
                 **params, n_estimators=n_estimators, n_jobs=-1)
             model.fit(
                 X_train, y_train,
                 eval_set=[(X_train, y_train), (X_valid, y_valid)],
-                eval_metric=metrics_dict[eval_metric]['lgb_metric_name'],
+                eval_metric=metrics_dict[eval_metric]["lgb_metric_name"],
                 verbose=verbose,
                 early_stopping_rounds=early_stopping_rounds)
 
             y_pred_valid = model.predict(X_valid)
             y_pred = model.predict(X_test, num_iteration=model.best_iteration_)
 
-        if model_type == 'xgb':
+        if model_type == "xgb":
             train_data = xgb.DMatrix(
                 data=X_train, label=y_train, feature_names=X.columns)
             valid_data = xgb.DMatrix(
                 data=X_valid, label=y_valid, feature_names=X.columns)
 
-            watchlist = [(train_data, 'train'), (valid_data, 'valid_data')]
+            watchlist = [(train_data, "train"), (valid_data, "valid_data")]
             model = xgb.train(
                 dtrain=train_data, num_boost_round=20000, evals=watchlist,
                 early_stopping_rounds=200, verbose_eval=verbose, params=params)
@@ -119,15 +119,15 @@ def train_model_regression(
                 xgb.DMatrix(X_test, feature_names=X.columns),
                 ntree_limit=model.best_ntree_limit)
 
-        if model_type == 'sklearn':
+        if model_type == "sklearn":
             model = model
             model.fit(X_train, y_train)
 
             y_pred_valid = model.predict(X_valid).reshape(-1,)
-            score = metrics_dict[eval_metric]['sklearn_scoring_function'](
+            score = metrics_dict[eval_metric]["sklearn_scoring_function"](
                 y_valid, y_pred_valid)
-            print(f'Fold {fold_n}. {eval_metric}: {score:.4f}.')
-            print('')
+            print(f"Fold {fold_n}. {eval_metric}: {score:.4f}.")
+            print("")
 
             y_pred = model.predict(X_test).reshape(-1,)
 
@@ -135,18 +135,18 @@ def train_model_regression(
             y_pred = model.predict(X_test)
 
         oof[valid_index] = y_pred_valid.reshape(-1,)
-        if eval_metric != 'group_mae':
+        if eval_metric != "group_mae":
             scores.append(
-                metrics_dict[eval_metric]['sklearn_scoring_function'](
+                metrics_dict[eval_metric]["sklearn_scoring_function"](
                     y_valid, y_pred_valid))
         else:
             scores.append(
-                metrics_dict[eval_metric]['scoring_function'](
-                    y_valid, y_pred_valid, X_valid['type']))
+                metrics_dict[eval_metric]["scoring_function"](
+                    y_valid, y_pred_valid, X_valid["type"]))
 
         prediction += y_pred
 
-        if model_type == 'lgb' and plot_feature_importance:
+        if model_type == "lgb" and plot_feature_importance:
             # feature importance
             fold_importance = pd.DataFrame()
             fold_importance["feature"] = columns
@@ -157,14 +157,14 @@ def train_model_regression(
 
     prediction /= folds.n_splits
 
-    print('CV mean score: {0:.4f}, std: {1:.4f}.'.format(
+    print("CV mean score: {0:.4f}, std: {1:.4f}.".format(
         np.mean(scores), np.std(scores)))
 
-    result_dict['oof'] = oof
-    result_dict['prediction'] = prediction
-    result_dict['scores'] = scores
+    result_dict["oof"] = oof
+    result_dict["prediction"] = prediction
+    result_dict["scores"] = scores
 
-    if model_type == 'lgb':
+    if model_type == "lgb":
         if plot_feature_importance:
             feature_importance["importance"] /= folds.n_splits
             cols = (
@@ -182,8 +182,8 @@ def train_model_regression(
                 x="importance", y="feature",
                 data=best_features.sort_values(by="importance",
                                                ascending=False))
-            plt.title('LGB Features (avg over folds)')
+            plt.title("LGB Features (avg over folds)")
 
-            result_dict['feature_importance'] = feature_importance
+            result_dict["feature_importance"] = feature_importance
 
     return result_dict
