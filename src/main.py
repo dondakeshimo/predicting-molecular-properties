@@ -2,7 +2,6 @@ import artgor_utils
 import pandas as pd
 import utils
 from sklearn.model_selection import KFold
-from sklearn.preprocessing import LabelEncoder
 
 
 file_folder = "../data"
@@ -31,12 +30,7 @@ test = utils.create_features(test)
 
 good_columns = utils.get_good_columns()
 
-for f in ["atom_0", "atom_1", "type_0", "type"]:
-    if f in good_columns:
-        lbl = LabelEncoder()
-        lbl.fit(list(train[f].values) + list(test[f].values))
-        train[f] = lbl.transform(list(train[f].values))
-        test[f] = lbl.transform(list(test[f].values))
+train, test = utils.encode_str(train, test)
 
 X = train[good_columns].copy()
 y = train["scalar_coupling_constant"]

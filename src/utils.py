@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from sklearn.preprocessing import LabelEncoder
 
 
 def map_atom_info(df, structures, atom_idx):
@@ -293,3 +294,15 @@ def calc_bonds(structures):
     structures = structures.join(bond_df)
 
     return structures
+
+
+def encode_str(train, test):
+    good_columns = get_good_columns()
+    for f in ["atom_0", "atom_1", "type_0", "type"]:
+        if f in good_columns:
+            lbl = LabelEncoder()
+            lbl.fit(list(train[f].values) + list(test[f].values))
+            train[f] = lbl.transform(list(train[f].values))
+            test[f] = lbl.transform(list(test[f].values))
+
+    return train, test
