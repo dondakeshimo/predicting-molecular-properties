@@ -61,10 +61,38 @@ params = {'num_leaves': 128,
           'colsample_bytree': 1.0
           }
 
-result_dict_lgb = artgor_utils.train_model_regression(
-    X=X, X_test=X_test, y=y, params=params, folds=folds, model_type='lgb',
-    eval_metric='group_mae', plot_feature_importance=True,
-    verbose=500, early_stopping_rounds=200, n_estimators=1500)
+# result_dict_lgb = artgor_utils.train_model_regression(
+#     X=X, X_test=X_test, y=y, params=params, folds=folds, model_type='lgb',
+#     eval_metric='group_mae', plot_feature_importance=True,
+#     verbose=500, early_stopping_rounds=200, n_estimators=1500)
+#
+# sub['scalar_coupling_constant'] = result_dict_lgb['prediction']
+# sub.to_csv('submission.csv', index=False)
 
-sub['scalar_coupling_constant'] = result_dict_lgb['prediction']
-sub.to_csv('submission.csv', index=False)
+X_short = pd.DataFrame(
+    {'ind': list(X.index),
+     'type': X['type'].values,
+     'oof': [0] * len(X),
+     'target': y.values})
+X_short_test = pd.DataFrame(
+    {'ind': list(X_test.index),
+     'type': X_test['type'].values,
+     'prediction': [0] * len(X_test)})
+
+for t in X['type'].unique():
+    print(f'Training of type {t}')
+    X_t = X.loc[X['type'] == t]
+    X_test_t = X_test.loc[X_test['type'] == t]
+    y_t = X_short.loc[X_short['type'] == t, 'target']
+    result_dict_lgb = artgor_utils.train_model_regression(
+        X=X_t, X_test=X_test_t, y=y_t, params=params, folds=folds,
+        model_type='lgb', eval_metric='group_mae',
+        plot_feature_importance=False,
+        verbose=500, early_stopping_rounds=200, n_estimators=3000)
+    X_short.loc[X_short['type'] == t, 'oof'] = result_dict_lgb['oof']
+    X_short_test.loc[X_short_test['type'] == t, 'prediction'] = \
+        result_dict_lgb['prediction']
+
+sub['scalar_coupling_constant'] = X_short_test['prediction']
+sub.to_csv('submission_t.csv', index=False)
+sub.head()
