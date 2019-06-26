@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import lightgbm as lgb
-import xgboost as xgb
 from sklearn import metrics
 
 
@@ -101,23 +100,6 @@ def train_model_regression(
 
             y_pred_valid = model.predict(X_valid)
             y_pred = model.predict(X_test, num_iteration=model.best_iteration_)
-
-        if model_type == "xgb":
-            train_data = xgb.DMatrix(
-                data=X_train, label=y_train, feature_names=X.columns)
-            valid_data = xgb.DMatrix(
-                data=X_valid, label=y_valid, feature_names=X.columns)
-
-            watchlist = [(train_data, "train"), (valid_data, "valid_data")]
-            model = xgb.train(
-                dtrain=train_data, num_boost_round=20000, evals=watchlist,
-                early_stopping_rounds=200, verbose_eval=verbose, params=params)
-            y_pred_valid = model.predict(
-                xgb.DMatrix(X_valid, feature_names=X.columns),
-                ntree_limit=model.best_ntree_limit)
-            y_pred = model.predict(
-                xgb.DMatrix(X_test, feature_names=X.columns),
-                ntree_limit=model.best_ntree_limit)
 
         if model_type == "sklearn":
             model = model

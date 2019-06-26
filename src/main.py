@@ -10,6 +10,11 @@ train = pd.read_csv(f"{file_folder}/train.csv")
 test = pd.read_csv(f"{file_folder}/test.csv")
 sub = pd.read_csv(f"{file_folder}/sample_submission.csv")
 structures = pd.read_csv(f"{file_folder}/structures.csv")
+contrib = pd.read_csv(f"{file_folder}/scalar_coupling_contributions.csv")
+
+train = pd.merge(train, contrib, how="left",
+                 left_on=["molecule_name", "atom_index_0", "atom_index_1"],
+                 right_on=["molecule_name", "atom_index_0", "atom_index_1"])
 
 structures = utils.get_atom_rad_en(structures)
 structures = utils.calc_bonds(structures)
@@ -34,6 +39,7 @@ train, test = utils.encode_str(train, test)
 
 X = train[good_columns].copy()
 y = train["scalar_coupling_constant"]
+y_fc = train["fc"]
 X_test = test[good_columns].copy()
 
 n_fold = 3
@@ -67,6 +73,33 @@ X_short = pd.DataFrame(
     {"ind": list(X.index),
      "type": X["type"].values,
      "oof": [0] * len(X),
+     "target": y_fc.values})
+X_short_test = pd.DataFrame(
+    {"ind": list(X_test.index),
+     "type": X_test["type"].values,
+     "prediction": [0] * len(X_test)})
+
+for t in X["type"].unique():
+    print(f"Training of type {t}")
+    X_t = X.loc[X["type"] == t]
+    X_test_t = X_test.loc[X_test["type"] == t]
+    y_t = X_short.loc[X_short["type"] == t, "target"]
+    result_dict_lgb = artgor_utils.train_model_regression(
+        X=X_t, X_test=X_test_t, y=y_t, params=params, folds=folds,
+        model_type="lgb", eval_metric="group_mae",
+        plot_feature_importance=False,
+        verbose=500, early_stopping_rounds=200, n_estimators=3000)
+    X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
+    X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
+        result_dict_lgb["prediction"]
+
+X["oof_fc"] = result_dict_lgb["oof"]
+X_test["oof_fc"] = result_dict_lgb["prediction"]
+
+X_short = pd.DataFrame(
+    {"ind": list(X.index),
+     "type": X["type"].values,
+     "oof": [0] * len(X),
      "target": y.values})
 X_short_test = pd.DataFrame(
     {"ind": list(X_test.index),
@@ -88,5 +121,5 @@ for t in X["type"].unique():
         result_dict_lgb["prediction"]
 
 sub["scalar_coupling_constant"] = X_short_test["prediction"]
-sub.to_csv("submission_t.csv", index=False)
+sub.to_csv(f"{file_folder}/submission.csv", index=False)
 sub.head()

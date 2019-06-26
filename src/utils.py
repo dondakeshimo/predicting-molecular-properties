@@ -18,7 +18,7 @@ def map_atom_info(df, structures, atom_idx):
         "z": f"z_{atom_idx}",
         "n_bonds": f"n_bonds_{atom_idx}",
         "bond_lengths_mean": f"bonds_length_mean_{atom_idx}"
-        })
+    })
 
     return df
 
@@ -149,57 +149,57 @@ def create_features(df):
 
 def get_good_columns():
     return [
-        "molecule_atom_index_0_dist_min",
+        "bond_lengths_mean_y",
         "molecule_atom_index_0_dist_max",
-        "molecule_atom_index_1_dist_min",
+        "bond_lengths_mean_x",
         "molecule_atom_index_0_dist_mean",
         "molecule_atom_index_0_dist_std",
-        "dist",
-        "molecule_atom_index_1_dist_std",
-        "molecule_atom_index_1_dist_max",
-        "molecule_atom_index_1_dist_mean",
-        "molecule_atom_index_0_dist_max_diff",
-        "molecule_atom_index_0_dist_max_div",
-        "molecule_atom_index_0_dist_std_diff",
-        "molecule_atom_index_0_dist_std_div",
-        "atom_0_couples_count",
-        "molecule_atom_index_0_dist_min_div",
-        "molecule_atom_index_1_dist_std_diff",
-        "molecule_atom_index_0_dist_mean_div",
-        "atom_1_couples_count",
-        "molecule_atom_index_0_dist_mean_diff",
         "molecule_couples",
-        "atom_index_1",
-        "molecule_dist_mean",
-        "molecule_atom_index_1_dist_max_diff",
         "molecule_atom_index_0_y_1_std",
-        "molecule_atom_index_1_dist_mean_diff",
-        "molecule_atom_index_1_dist_std_div",
-        "molecule_atom_index_1_dist_mean_div",
-        "molecule_atom_index_1_dist_min_diff",
-        "molecule_atom_index_1_dist_min_div",
-        "molecule_atom_index_1_dist_max_div",
-        "molecule_atom_index_0_z_1_std",
-        "y_0",
-        "molecule_type_dist_std_diff",
-        "molecule_atom_1_dist_min_diff",
-        "molecule_atom_index_0_x_1_std",
-        "molecule_dist_min",
-        "molecule_atom_index_0_dist_min_diff",
-        "molecule_atom_index_0_y_1_mean_diff",
-        "molecule_type_dist_min",
-        "molecule_atom_1_dist_min_div",
-        "atom_index_0",
+        "molecule_dist_mean",
         "molecule_dist_max",
-        "molecule_atom_1_dist_std_diff",
-        "molecule_type_dist_max",
-        "molecule_atom_index_0_y_1_max_diff",
-        "molecule_type_0_dist_std_diff",
-        "molecule_type_dist_mean_diff",
-        "molecule_atom_1_dist_mean",
+        "dist_y",
+        "molecule_atom_index_0_z_1_std",
+        "molecule_atom_index_1_dist_max",
+        "molecule_atom_index_1_dist_min",
+        "molecule_atom_index_0_x_1_std",
+        "molecule_atom_index_1_dist_std",
         "molecule_atom_index_0_y_1_mean_div",
-        "molecule_type_dist_mean_div",
-        "type"]
+        "y_0",
+        "molecule_atom_index_1_dist_mean",
+        "molecule_atom_1_dist_mean",
+        "x_0",
+        "dist_x",
+        "molecule_type_dist_std",
+        "dist_z",
+        "molecule_atom_index_1_dist_std_diff",
+        "molecule_type_dist_mean_diff",
+        "molecule_atom_index_0_dist_max_div",
+        "molecule_atom_1_dist_std",
+        "molecule_type_0_dist_std",
+        "z_0",
+        "molecule_type_dist_std_diff",
+        "molecule_atom_index_0_y_1_mean_diff",
+        "molecule_atom_index_0_dist_std_diff",
+        "molecule_atom_index_0_dist_mean_div",
+        "molecule_atom_index_0_dist_max_diff",
+        "x_1",
+        "molecule_type_dist_max",
+        "molecule_atom_index_0_dist_std_div",
+        "molecule_atom_index_0_dist_mean_diff",
+        "molecule_atom_1_dist_std_diff",
+        "molecule_atom_index_0_y_1_max_diff",
+        "z_1",
+        "molecule_atom_index_0_y_1_max",
+        "molecule_atom_index_0_y_1_mean",
+        "y_1",
+        "molecule_type_0_dist_std_diff",
+        "molecule_dist_min",
+        "molecule_atom_index_1_dist_std_div",
+        "molecule_atom_1_dist_min",
+        "molecule_atom_index_1_dist_max_diff",
+        "type"
+    ]
 
 
 def get_atom_rad_en(structures):
@@ -232,12 +232,14 @@ def calc_bonds(structures):
     source_row = np.arange(len(structures))
     max_atoms = 28
 
-    bonds = np.zeros((len(structures)+1, max_atoms+1), dtype=np.int8)
-    bond_dists = np.zeros((len(structures)+1, max_atoms+1), dtype=np.float32)
+    bonds = np.zeros((len(structures) + 1, max_atoms + 1),
+                     dtype=np.int8)
+    bond_dists = np.zeros((len(structures) + 1, max_atoms + 1),
+                          dtype=np.float32)
 
     print("Calculating bonds")
 
-    for i in tqdm(range(max_atoms-1)):
+    for i in tqdm(range(max_atoms - 1)):
         p_compare = np.roll(p_compare, -1, axis=0)
         m_compare = np.roll(m_compare, -1, axis=0)
         r_compare = np.roll(r_compare, -1, axis=0)
