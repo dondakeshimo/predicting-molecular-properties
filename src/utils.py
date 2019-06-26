@@ -16,6 +16,19 @@ def map_atom_info(df, structures, atom_idx):
     return df
 
 
+def calc_dist(df):
+    df_p_0 = df[['x_0', 'y_0', 'z_0']].values
+    df_p_1 = df[['x_1', 'y_1', 'z_1']].values
+
+    df['dist'] = np.linalg.norm(df_p_0 - df_p_1, axis=1)
+    df['dist_x'] = (df['x_0'] - df['x_1']) ** 2
+    df['dist_y'] = (df['y_0'] - df['y_1']) ** 2
+    df['dist_z'] = (df['z_0'] - df['z_1']) ** 2
+
+    return df
+
+
+
 def create_features(df):
     df['molecule_couples'] = \
         df.groupby('molecule_name')['id'].transform('count')

@@ -18,19 +18,8 @@ train = utils.map_atom_info(train, structures, 1)
 test = utils.map_atom_info(test, structures, 0)
 test = utils.map_atom_info(test, structures, 1)
 
-train_p_0 = train[['x_0', 'y_0', 'z_0']].values
-train_p_1 = train[['x_1', 'y_1', 'z_1']].values
-test_p_0 = test[['x_0', 'y_0', 'z_0']].values
-test_p_1 = test[['x_1', 'y_1', 'z_1']].values
-
-train['dist'] = np.linalg.norm(train_p_0 - train_p_1, axis=1)
-test['dist'] = np.linalg.norm(test_p_0 - test_p_1, axis=1)
-train['dist_x'] = (train['x_0'] - train['x_1']) ** 2
-test['dist_x'] = (test['x_0'] - test['x_1']) ** 2
-train['dist_y'] = (train['y_0'] - train['y_1']) ** 2
-test['dist_y'] = (test['y_0'] - test['y_1']) ** 2
-train['dist_z'] = (train['z_0'] - train['z_1']) ** 2
-test['dist_z'] = (test['z_0'] - test['z_1']) ** 2
+train = utils.calc_dist(train)
+test = utils.calc_dist(test)
 
 train['type_0'] = train['type'].apply(lambda x: x[0])
 test['type_0'] = test['type'].apply(lambda x: x[0])
