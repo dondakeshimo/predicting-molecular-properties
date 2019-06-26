@@ -13,6 +13,9 @@ test = pd.read_csv(f"{file_folder}/test.csv")
 sub = pd.read_csv(f"{file_folder}/sample_submission.csv")
 structures = pd.read_csv(f"{file_folder}/structures.csv")
 
+structures = utils.get_atom_rad_en(structures)
+structures = utils.calc_bonds(structures)
+
 train = utils.map_atom_info(train, structures, 0)
 train = utils.map_atom_info(train, structures, 1)
 test = utils.map_atom_info(test, structures, 0)
@@ -28,9 +31,8 @@ train = utils.create_features(train)
 test = utils.create_features(test)
 
 good_columns = utils.get_good_columns()
-good_columns
 
-for f in ['atom_1', 'type_0', 'type']:
+for f in ['atom_0', 'atom_1', 'type_0', 'type']:
     if f in good_columns:
         lbl = LabelEncoder()
         lbl.fit(list(train[f].values) + list(test[f].values))
@@ -40,8 +42,6 @@ for f in ['atom_1', 'type_0', 'type']:
 X = train[good_columns].copy()
 y = train['scalar_coupling_constant']
 X_test = test[good_columns].copy()
-
-del train, test
 
 n_fold = 3
 folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)

@@ -9,10 +9,16 @@ def map_atom_info(df, structures, atom_idx):
                   right_on=['molecule_name', 'atom_index'])
 
     df = df.drop('atom_index', axis=1)
-    df = df.rename(columns={'atom': f'atom_{atom_idx}',
-                            'x': f'x_{atom_idx}',
-                            'y': f'y_{atom_idx}',
-                            'z': f'z_{atom_idx}'})
+    
+    df = df.rename(columns={
+        'atom': f'atom_{atom_idx}',
+        'x': f'x_{atom_idx}',
+        'y': f'y_{atom_idx}',
+        'z': f'z_{atom_idx}',
+        'n_bonds': f'n_bonds_{atom_idx}',
+        'bond_lengths_mean': f'bonds_length_mean_{atom_idx}'
+        })
+
     return df
 
 
