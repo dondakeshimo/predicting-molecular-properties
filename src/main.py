@@ -10,6 +10,7 @@ train = pd.read_csv(f"{file_folder}/train.csv")
 test = pd.read_csv(f"{file_folder}/test.csv")
 sub = pd.read_csv(f"{file_folder}/sample_submission.csv")
 structures = pd.read_csv(f"{file_folder}/structures.csv")
+contrib = pd.read_csv(f"{file_folder}/scalar_coupling_contributions.csv")
 
 structures = utils.get_atom_rad_en(structures)
 structures = utils.calc_bonds(structures)
@@ -88,5 +89,5 @@ for t in X["type"].unique():
         result_dict_lgb["prediction"]
 
 sub["scalar_coupling_constant"] = X_short_test["prediction"]
-sub.to_csv("submission_t.csv", index=False)
+sub.to_csv(f"{file_folder}/submission.csv", index=False)
 sub.head()
