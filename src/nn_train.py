@@ -31,7 +31,7 @@ def create_nn_model(input_shape):
     return model
 
 
-def train_nn_model(X, X_test, y, folds, model,
+def train_nn_model(X, X_test, y, folds,
                    loss="mae", verbose=1, epochs=100, batch_size=32):
 
     result_dict = {}
@@ -55,6 +55,7 @@ def train_nn_model(X, X_test, y, folds, model,
                 X.iloc[train_index], X.iloc[valid_index]
             y_train, y_valid = y.iloc[train_index], y.iloc[valid_index]
 
+        model = create_nn_model(X.shape[1])
         model.compile(loss=loss, optimizer="adam")
         es = callbacks.EarlyStopping(
             monitor='val_loss', min_delta=0., patience=12,

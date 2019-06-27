@@ -121,8 +121,6 @@ def train_each_type_with_lgb(X, X_test, y, folds):
 
 
 def train_each_type_with_nn(X, X_test, y, folds):
-    model = nn_train.create_nn_model(X.shape[1])
-
     X_short = pd.DataFrame(
         {"ind": list(X.index),
          "type": X["type"].values,
@@ -139,8 +137,8 @@ def train_each_type_with_nn(X, X_test, y, folds):
         X_test_t = X_test.loc[X_test["type"] == t]
         y_t = X_short.loc[X_short["type"] == t, "target"]
         result_dict_lgb = nn_train.train_nn_model(
-            X=X_t, X_test=X_test_t, y=y_t, folds=folds, model=model,
-            verbose=2, epochs=5, batch_size=32)
+            X=X_t, X_test=X_test_t, y=y_t, folds=folds,
+            verbose=2, epochs=2, batch_size=32)
         X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
         X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
             result_dict_lgb["prediction"]
@@ -156,28 +154,28 @@ def main():
 
     X = train[good_columns].copy()
     y = train["scalar_coupling_constant"]
-    y_fc = train["fc"]
+    # y_fc = train["fc"]
     X_test = test[good_columns].copy()
 
     n_fold = 3
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
 
-    X_short, X_short_test = train_each_type_with_lgb(X, X_test, y_fc, folds)
+    # X_short, X_short_test = train_each_type_with_lgb(X, X_test, y_fc, folds)
 
-    X["oof_fc"] = X_short["oof"]
-    X_test["oof_fc"] = X_short_test["prediction"]
+    # X["oof_fc"] = X_short["oof"]
+    # X_test["oof_fc"] = X_short_test["prediction"]
 
-    X_lgb, X_lgb_test = \
-        train_each_type_with_lgb(X, X_test, y, folds)
+    # X_lgb, X_lgb_test = \
+    #     train_each_type_with_lgb(X, X_test, y, folds)
 
     X_nn, X_nn_test = \
         train_each_type_with_nn(X, X_test, y, folds)
 
-    submit = (X_lgb_test["prediction"] + X_nn_test["prediction"]) / 2
+    # submit = (X_lgb_test["prediction"] + X_nn_test["prediction"]) / 2
 
     sub = pd.read_csv(f"{file_folder}/sample_submission.csv")
-    sub["scalar_coupling_constant"] = submit
-    # sub["scalar_coupling_constant"] = X_nn_test["prediction"]
+    # sub["scalar_coupling_constant"] = submit
+    sub["scalar_coupling_constant"] = X_nn_test["prediction"]
     sub.to_csv(f"{file_folder}/submission.csv", index=False)
     sub.head()
 
