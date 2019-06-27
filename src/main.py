@@ -95,8 +95,8 @@ for t in X["type"].unique():
     X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
         result_dict_lgb["prediction"]
 
-X["oof_fc"] = result_dict_lgb["oof"]
-X_test["oof_fc"] = result_dict_lgb["prediction"]
+X["oof_fc"] = X_short["oof"]
+X_test["oof_fc"] = X_short_test["prediction"]
 
 X_short = pd.DataFrame(
     {"ind": list(X.index),

@@ -2,7 +2,6 @@ from keras import backend as K
 from keras import callbacks
 from keras.layers import Input, Dense, BatchNormalization, Dropout
 from keras.models import Model
-from keras.optimizer import Adam
 import numpy as np
 import pandas as pd
 import time
@@ -320,7 +319,7 @@ def encode_str(train, test):
 
 
 def create_nn_model(input_shape):
-    input = Input(shape=input_shape)
+    input = Input(shape=(input_shape,))
     x = Dense(256, activation="relu", kernel_initializer="he_normal")(input)
     x = BatchNormalization()(x)
     x = Dropout(0.5)(x)
@@ -337,6 +336,7 @@ def create_nn_model(input_shape):
     x = BatchNormalization()(x)
     x = Dropout(0.5)(x)
     x = Dense(64, activation="relu", kernel_initializer="he_normal")(x)
+    x = BatchNormalization()(x)
     output = Dense(1, activation="linear")(x)
     model = Model(inputs=input, outputs=output)
     return model
@@ -366,7 +366,7 @@ def train_nn_model(X, X_test, y, params, folds, model,
                 X.iloc[train_index], X.iloc[valid_index]
             y_train, y_valid = y.iloc[train_index], y.iloc[valid_index]
 
-        model.compile(loss=loss, optimizer=Adam)
+        model.compile(loss=loss, optimizer="adam")
         es = callbacks.EarlyStopping(
             monitor='val_loss', min_delta=0., patience=12,
             verbose=verbose, mode='min', baseline=None,
@@ -378,7 +378,6 @@ def train_nn_model(X, X_test, y, params, folds, model,
             X_train, y_train, validation_data=(X_valid, y_valid),
             callbacks=[es, rlr], epochs=epochs,
             batch_size=batch_size, verbose=verbose)
-        K.clear_session()
 
         y_pred_valid = model.predict(X_valid)
         y_pred = model.predict(X_test)
@@ -389,6 +388,8 @@ def train_nn_model(X, X_test, y, params, folds, model,
         oof[valid_index] = y_pred_valid.reshape(-1,)
 
         prediction += y_pred
+
+        K.clear_session()
 
     prediction /= folds.n_splits
 
