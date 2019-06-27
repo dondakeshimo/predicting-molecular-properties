@@ -1,3 +1,5 @@
+from keras.layers import Input, Dense, BatchNormalization, Dropout
+from keras.models import Model
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -311,3 +313,26 @@ def encode_str(train, test):
             test[f] = lbl.transform(list(test[f].values))
 
     return train, test
+
+
+def create_nn_model(input_shape):
+    input = Input(shape=input_shape)
+    x = Dense(256, activation="relu", kernel_initializer="he_normal")(input)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(256, activation="relu", kernel_initializer="he_normal")(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(128, activation="relu", kernel_initializer="he_normal")(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(64, activation="relu", kernel_initializer="he_normal")(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(128, activation="relu", kernel_initializer="he_normal")(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(64, activation="relu", kernel_initializer="he_normal")(x)
+    output = Dense(1, activation="linear")(x)
+    model = Model(inputs=input, outputs=output)
+    return model
