@@ -17,7 +17,8 @@ def map_atom_info(df, structures, atom_idx):
         "y": f"y_{atom_idx}",
         "z": f"z_{atom_idx}",
         "n_bonds": f"n_bonds_{atom_idx}",
-        "bond_lengths_mean": f"bonds_length_mean_{atom_idx}"
+        "bond_lengths_mean": f"bond_lengths_mean_{atom_idx}",
+        "bond_lengths_std": f"bond_lengths_std_{atom_idx}"
     })
 
     return df
@@ -149,9 +150,11 @@ def create_features(df):
 
 def get_good_columns():
     return [
-        "bond_lengths_mean_y",
+        "bond_lengths_mean_1",
+        "bond_lengths_std_0",
+        "bond_lengths_std_1",
         "molecule_atom_index_0_dist_max",
-        "bond_lengths_mean_x",
+        "bond_lengths_mean_0",
         "molecule_atom_index_0_dist_mean",
         "molecule_atom_index_0_dist_std",
         "molecule_couples",
