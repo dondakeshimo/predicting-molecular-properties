@@ -13,8 +13,10 @@ structures = pd.read_csv(f"{file_folder}/structures.csv")
 contrib = pd.read_csv(f"{file_folder}/scalar_coupling_contributions.csv")
 
 train = pd.merge(train, contrib, how="left",
-                 left_on=["molecule_name", "atom_index_0", "atom_index_1"],
-                 right_on=["molecule_name", "atom_index_0", "atom_index_1"])
+                 left_on=["molecule_name", "atom_index_0",
+                          "atom_index_1", "type"],
+                 right_on=["molecule_name", "atom_index_0",
+                           "atom_index_1", "type"])
 
 structures = utils.get_atom_rad_en(structures)
 structures = utils.calc_bonds(structures)
