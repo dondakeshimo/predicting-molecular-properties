@@ -27,11 +27,12 @@ def create_nn_model(input_shape):
     x = BatchNormalization()(x)
     output = Dense(1, activation="linear")(x)
     model = Model(inputs=input, outputs=output)
+    print(model.summary)
     return model
 
 
-def train_nn_model(X, X_test, y, params, folds, model,
-                   loss="mae", verbose=1, epochs=100, batch_size=64):
+def train_nn_model(X, X_test, y, folds, model,
+                   loss="mae", verbose=1, epochs=100, batch_size=32):
 
     result_dict = {}
 
@@ -67,10 +68,10 @@ def train_nn_model(X, X_test, y, params, folds, model,
             callbacks=[es, rlr], epochs=epochs,
             batch_size=batch_size, verbose=verbose)
 
-        y_pred_valid = model.predict(X_valid)
-        y_pred = model.predict(X_test)
+        y_pred_valid = model.predict(X_valid).reshape(-1,)
+        y_pred = model.predict(X_test).reshape(-1,)
 
-        accuracy = np.mean(np.abs(y_valid - y_pred_valid[0][:, 0]))
+        accuracy = np.mean(np.abs(y_valid - y_pred_valid))
         scores.append(np.log(accuracy))
 
         oof[valid_index] = y_pred_valid.reshape(-1,)
