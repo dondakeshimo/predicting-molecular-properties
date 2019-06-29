@@ -1,43 +1,24 @@
-import artgor_utils
-import nn_train
 import os
 import pandas as pd
-import pickle
 import preprocess
 from sklearn.model_selection import KFold
+
+import artgor_utils
+import handle_files
+import nn_train
 
 
 def load_n_preprocess_data(file_folder, init_flag=False):
     if not init_flag and \
        os.path.exists(f"{file_folder}/train.pickle") and \
        os.path.exists(f"{file_folder}/train.pickle"):
-        return load_data_from_pickle(file_folder)
+        return handle_files.load_data_from_pickle(file_folder)
     else:
-        train, test, structures, contrib = load_data_from_csv(file_folder)
+        train, test, structures, contrib = \
+            handle_files.load_data_from_csv(file_folder)
         train, test = preprocess_data(train, test, structures, contrib)
-        dump_data_as_pickle(train, test)
+        handle_files.dump_data_as_pickle(train, test)
         return train, test
-
-
-def load_data_from_pickle(file_folder):
-    print(f"load data from {file_folder}/train.pickle")
-    with open(f"{file_folder}/train.pickle", "rb") as f:
-        train = pickle.load(f)
-
-    with open(f"{file_folder}/test.pickle", "rb") as f:
-        test = pickle.load(f)
-
-    return train, test
-
-
-def load_data_from_csv(file_folder):
-    print(f"load data from {file_folder}/train.csv")
-    train = pd.read_csv(f"{file_folder}/train.csv")
-    test = pd.read_csv(f"{file_folder}/test.csv")
-    structures = pd.read_csv(f"{file_folder}/structures.csv")
-    contrib = pd.read_csv(f"{file_folder}/scalar_coupling_contributions.csv")
-
-    return train, test, structures, contrib
 
 
 def preprocess_data(train, test, structures, contrib):
@@ -67,14 +48,6 @@ def preprocess_data(train, test, structures, contrib):
     train, test = preprocess.encode_str(train, test)
 
     return train, test
-
-
-def dump_data_as_pickle(train, test):
-    with open('../data/train.pickle', 'wb') as f:
-        pickle.dump(train, f)
-
-    with open('../data/test.pickle', 'wb') as f:
-        pickle.dump(test, f)
 
 
 def train_each_type_with_lgb(X, X_test, y, folds):
