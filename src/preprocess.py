@@ -36,6 +36,45 @@ def calc_dist(df):
     return df
 
 
+def create_features_full(df):
+    df["molecule_couples"] = \
+        df.groupby("molecule_name")["id"].transform("count")
+    df["molecule_dist_mean"] = \
+        df.groupby("molecule_name")["dist"].transform("mean")
+    df["molecule_dist_min"] = \
+        df.groupby("molecule_name")["dist"].transform("min")
+    df["molecule_dist_max"] = \
+        df.groupby("molecule_name")["dist"].transform("max")
+    df["atom_0_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["id"].transform("count")
+    df["atom_1_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
+
+    num_cols = ["x_1", "y_1", "z_1", "dist", "dist_x", "dist_y", "dist_z"]
+    cat_cols = ["atom_index_0", "atom_index_1", "type", "atom_1", "type_0"]
+    aggs = ["mean", "max", "std", "min"]
+    for col in cat_cols:
+        df[f"molecule_{col}_count"] = \
+            df.groupby("molecule_name")[col].transform("count")
+
+    for cat_col in tqdm(cat_cols):
+        for num_col in tqdm(num_cols):
+            for agg in aggs:
+                col = f"molecule_{cat_col}_{num_col}_{agg}"
+                df[col] = df.groupby(["molecule_name", cat_col])[num_col] \
+                            .transform(agg)
+                if agg == "std":
+                    df[col] = df[col].fillna(0)
+
+                df[col + "_diff"] = df[col] - df[num_col]
+
+                df[col + "_div"] = df[col] / df[num_col]
+                df[col + "_div"] = df[col + "_div"].fillna(
+                    df[col + "_div"].max() * 10)
+
+    return df
+
+
 def create_features(df):
     df["molecule_couples"] = \
         df.groupby("molecule_name")["id"].transform("count")
