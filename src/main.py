@@ -1,4 +1,5 @@
 import artgor_utils
+import nn_train
 import os
 import pandas as pd
 import pickle
@@ -14,6 +15,7 @@ def load_n_preprocess_data(file_folder, init_flag=False):
     else:
         train, test, structures, contrib = load_data_from_csv(file_folder)
         train, test = preprocess_data(train, test, structures, contrib)
+        dump_data_as_pickle(train, test)
         return train, test
 
 
@@ -119,6 +121,32 @@ def train_each_type_with_lgb(X, X_test, y, folds):
     return X_short, X_short_test
 
 
+def train_each_type_with_nn(X, X_test, y, folds):
+    X_short = pd.DataFrame(
+        {"ind": list(X.index),
+         "type": X["type"].values,
+         "oof": [0] * len(X),
+         "target": y.values})
+    X_short_test = pd.DataFrame(
+        {"ind": list(X_test.index),
+         "type": X_test["type"].values,
+         "prediction": [0] * len(X_test)})
+
+    for t in X["type"].unique():
+        print(f"Training of type {t}")
+        X_t = X.loc[X["type"] == t]
+        X_test_t = X_test.loc[X_test["type"] == t]
+        y_t = X_short.loc[X_short["type"] == t, "target"]
+        result_dict_lgb = nn_train.train_nn_model(
+            X=X_t, X_test=X_test_t, y=y_t, folds=folds,
+            verbose=2, epochs=10, batch_size=32)
+        X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
+        X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
+            result_dict_lgb["prediction"]
+
+    return X_short, X_short_test
+
+
 def main():
     file_folder = "../data"
     train, test = load_n_preprocess_data(file_folder, init_flag=False)
@@ -138,10 +166,16 @@ def main():
     X["oof_fc"] = X_short["oof"]
     X_test["oof_fc"] = X_short_test["prediction"]
 
-    X_short, X_short_test = train_each_type_with_lgb(X, X_test, y, folds)
+    X_lgb, X_lgb_test = \
+        train_each_type_with_lgb(X, X_test, y, folds)
+
+    X_nn, X_nn_test = \
+        train_each_type_with_nn(X, X_test, y, folds)
+
+    submit = (X_lgb_test["prediction"] + X_nn_test["prediction"]) / 2
 
     sub = pd.read_csv(f"{file_folder}/sample_submission.csv")
-    sub["scalar_coupling_constant"] = X_short_test["prediction"]
+    sub["scalar_coupling_constant"] = submit
     sub.to_csv(f"{file_folder}/submission.csv", index=False)
     sub.head()
 

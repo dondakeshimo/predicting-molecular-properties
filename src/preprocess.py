@@ -36,6 +36,45 @@ def calc_dist(df):
     return df
 
 
+def create_features_full(df):
+    df["molecule_couples"] = \
+        df.groupby("molecule_name")["id"].transform("count")
+    df["molecule_dist_mean"] = \
+        df.groupby("molecule_name")["dist"].transform("mean")
+    df["molecule_dist_min"] = \
+        df.groupby("molecule_name")["dist"].transform("min")
+    df["molecule_dist_max"] = \
+        df.groupby("molecule_name")["dist"].transform("max")
+    df["atom_0_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["id"].transform("count")
+    df["atom_1_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
+
+    num_cols = ["x_1", "y_1", "z_1", "dist", "dist_x", "dist_y", "dist_z"]
+    cat_cols = ["atom_index_0", "atom_index_1", "type", "atom_1", "type_0"]
+    aggs = ["mean", "max", "std", "min"]
+    for col in cat_cols:
+        df[f"molecule_{col}_count"] = \
+            df.groupby("molecule_name")[col].transform("count")
+
+    for cat_col in tqdm(cat_cols):
+        for num_col in tqdm(num_cols):
+            for agg in aggs:
+                col = f"molecule_{cat_col}_{num_col}_{agg}"
+                df[col] = df.groupby(["molecule_name", cat_col])[num_col] \
+                            .transform(agg)
+                if agg == "std":
+                    df[col] = df[col].fillna(0)
+
+                df[col + "_diff"] = df[col] - df[num_col]
+
+                df[col + "_div"] = df[col] / df[num_col]
+                df[col + "_div"] = df[col + "_div"].fillna(
+                    df[col + "_div"].max() * 10)
+
+    return df
+
+
 def create_features(df):
     df["molecule_couples"] = \
         df.groupby("molecule_name")["id"].transform("count")
@@ -52,20 +91,29 @@ def create_features(df):
 
     df[f"molecule_atom_index_0_x_1_std"] = \
         df.groupby(["molecule_name", "atom_index_0"])["x_1"].transform("std")
+    df[f"molecule_atom_index_0_x_1_std"] = \
+        df[f"molecule_atom_index_0_x_1_std"].fillna(0)
     df[f"molecule_atom_index_0_y_1_mean"] = \
         df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("mean")
     df[f"molecule_atom_index_0_y_1_mean_diff"] = \
         df[f"molecule_atom_index_0_y_1_mean"] - df["y_1"]
     df[f"molecule_atom_index_0_y_1_mean_div"] = \
         df[f"molecule_atom_index_0_y_1_mean"] / df["y_1"]
+    df[f"molecule_atom_index_0_y_1_mean_div"] = \
+        df[f"molecule_atom_index_0_y_1_mean"].fillna(
+            df[f"molecule_atom_index_0_y_1_mean"].max() * 10)
     df[f"molecule_atom_index_0_y_1_max"] = \
         df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("max")
     df[f"molecule_atom_index_0_y_1_max_diff"] = \
         df[f"molecule_atom_index_0_y_1_max"] - df["y_1"]
     df[f"molecule_atom_index_0_y_1_std"] = \
         df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("std")
+    df[f"molecule_atom_index_0_y_1_std"] = \
+        df[f"molecule_atom_index_0_y_1_std"].fillna(0)
     df[f"molecule_atom_index_0_z_1_std"] = \
         df.groupby(["molecule_name", "atom_index_0"])["z_1"].transform("std")
+    df[f"molecule_atom_index_0_z_1_std"] = \
+        df[f"molecule_atom_index_0_z_1_std"].fillna(0)
     df[f"molecule_atom_index_0_dist_mean"] = \
         df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("mean")
     df[f"molecule_atom_index_0_dist_mean_diff"] = \
@@ -86,10 +134,15 @@ def create_features(df):
         df[f"molecule_atom_index_0_dist_min"] / df["dist"]
     df[f"molecule_atom_index_0_dist_std"] = \
         df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("std")
+    df[f"molecule_atom_index_0_dist_std"] = \
+        df[f"molecule_atom_index_0_dist_std"].fillna(0)
     df[f"molecule_atom_index_0_dist_std_diff"] = \
         df[f"molecule_atom_index_0_dist_std"] - df["dist"]
     df[f"molecule_atom_index_0_dist_std_div"] = \
         df[f"molecule_atom_index_0_dist_std"] / df["dist"]
+    df[f"molecule_atom_index_0_dist_std_div"] = \
+        df[f"molecule_atom_index_0_dist_std_div"].fillna(
+            df[f"molecule_atom_index_0_dist_std_div"].max() * 10)
     df[f"molecule_atom_index_1_dist_mean"] = \
         df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("mean")
     df[f"molecule_atom_index_1_dist_mean_diff"] = \
@@ -110,10 +163,15 @@ def create_features(df):
         df[f"molecule_atom_index_1_dist_min"] / df["dist"]
     df[f"molecule_atom_index_1_dist_std"] = \
         df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("std")
+    df[f"molecule_atom_index_1_dist_std"] = \
+        df[f"molecule_atom_index_1_dist_std"].fillna(0)
     df[f"molecule_atom_index_1_dist_std_diff"] = \
         df[f"molecule_atom_index_1_dist_std"] - df["dist"]
     df[f"molecule_atom_index_1_dist_std_div"] = \
         df[f"molecule_atom_index_1_dist_std"] / df["dist"]
+    df[f"molecule_atom_index_1_dist_std_div"] = \
+        df[f"molecule_atom_index_1_dist_std_div"].fillna(
+            df[f"molecule_atom_index_1_dist_std_div"].max() * 10)
     df[f"molecule_atom_1_dist_mean"] = \
         df.groupby(["molecule_name", "atom_1"])["dist"].transform("mean")
     df[f"molecule_atom_1_dist_min"] = \
@@ -124,10 +182,14 @@ def create_features(df):
         df[f"molecule_atom_1_dist_min"] / df["dist"]
     df[f"molecule_atom_1_dist_std"] = \
         df.groupby(["molecule_name", "atom_1"])["dist"].transform("std")
+    df[f"molecule_atom_1_dist_std"] = \
+        df[f"molecule_atom_1_dist_std"].fillna(0)
     df[f"molecule_atom_1_dist_std_diff"] = \
         df[f"molecule_atom_1_dist_std"] - df["dist"]
     df[f"molecule_type_0_dist_std"] = \
         df.groupby(["molecule_name", "type_0"])["dist"].transform("std")
+    df[f"molecule_type_0_dist_std"] = \
+        df[f"molecule_type_0_dist_std"].fillna(0)
     df[f"molecule_type_0_dist_std_diff"] = \
         df[f"molecule_type_0_dist_std"] - df["dist"]
     df[f"molecule_type_dist_mean"] = \
@@ -142,6 +204,8 @@ def create_features(df):
         df.groupby(["molecule_name", "type"])["dist"].transform("min")
     df[f"molecule_type_dist_std"] = \
         df.groupby(["molecule_name", "type"])["dist"].transform("std")
+    df[f"molecule_type_dist_std"] = \
+        df[f"molecule_type_dist_std"].fillna(0)
     df[f"molecule_type_dist_std_diff"] = \
         df[f"molecule_type_dist_std"] - df["dist"]
 
@@ -151,8 +215,8 @@ def create_features(df):
 def get_good_columns():
     return [
         "bond_lengths_mean_1",
-        "bond_lengths_std_0",
         "bond_lengths_std_1",
+        "bond_lengths_std_0",
         "molecule_atom_index_0_dist_max",
         "bond_lengths_mean_0",
         "molecule_atom_index_0_dist_mean",
