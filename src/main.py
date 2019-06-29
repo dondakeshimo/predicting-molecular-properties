@@ -155,28 +155,27 @@ def main():
 
     X = train[good_columns].copy()
     y = train["scalar_coupling_constant"]
-    # y_fc = train["fc"]
+    y_fc = train["fc"]
     X_test = test[good_columns].copy()
 
     n_fold = 3
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
 
-    # X_short, X_short_test = train_each_type_with_lgb(X, X_test, y_fc, folds)
+    X_short, X_short_test = train_each_type_with_lgb(X, X_test, y_fc, folds)
 
-    # X["oof_fc"] = X_short["oof"]
-    # X_test["oof_fc"] = X_short_test["prediction"]
+    X["oof_fc"] = X_short["oof"]
+    X_test["oof_fc"] = X_short_test["prediction"]
 
-    # X_lgb, X_lgb_test = \
-    #     train_each_type_with_lgb(X, X_test, y, folds)
+    X_lgb, X_lgb_test = \
+        train_each_type_with_lgb(X, X_test, y, folds)
 
     X_nn, X_nn_test = \
         train_each_type_with_nn(X, X_test, y, folds)
 
-    # submit = (X_lgb_test["prediction"] + X_nn_test["prediction"]) / 2
+    submit = (X_lgb_test["prediction"] + X_nn_test["prediction"]) / 2
 
     sub = pd.read_csv(f"{file_folder}/sample_submission.csv")
-    # sub["scalar_coupling_constant"] = submit
-    sub["scalar_coupling_constant"] = X_nn_test["prediction"]
+    sub["scalar_coupling_constant"] = submit
     sub.to_csv(f"{file_folder}/submission.csv", index=False)
     sub.head()
 
