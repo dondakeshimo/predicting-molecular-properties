@@ -15,6 +15,7 @@ def load_n_preprocess_data(file_folder, init_flag=False):
     else:
         train, test, structures, contrib = load_data_from_csv(file_folder)
         train, test = preprocess_data(train, test, structures, contrib)
+        dump_data_as_pickle(train, test)
         return train, test
 
 
@@ -138,7 +139,7 @@ def train_each_type_with_nn(X, X_test, y, folds):
         y_t = X_short.loc[X_short["type"] == t, "target"]
         result_dict_lgb = nn_train.train_nn_model(
             X=X_t, X_test=X_test_t, y=y_t, folds=folds,
-            verbose=2, epochs=2, batch_size=32)
+            verbose=2, epochs=10, batch_size=32)
         X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
         X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
             result_dict_lgb["prediction"]
