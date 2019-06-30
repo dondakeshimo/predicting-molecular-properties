@@ -29,3 +29,8 @@ def dump_data_as_pickle(train, test):
 
     with open('../data/test.pickle', 'wb') as f:
         pickle.dump(test, f)
+
+
+def dump_data_as_csv(train, test):
+    train.to_csv("../data/train.csv", index=False)
+    test.to_csv("../data/test.csv", index=False)

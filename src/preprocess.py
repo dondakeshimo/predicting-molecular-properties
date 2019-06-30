@@ -6,7 +6,6 @@ from sklearn.model_selection import KFold
 
 import artgor_utils
 import handle_files
-import preprocess_helper
 
 
 def map_atom_info(df, structures, atom_idx):
@@ -59,33 +58,88 @@ def create_features_full(df):
     cat_cols = ["atom_index_0", "atom_index_1", "type", "atom_1", "type_0"]
     aggs = ["mean", "max", "std", "min"]
     for col in cat_cols:
-        df[f"molecule_{col}_count"] = \
+        df[f"molecule__{col}__count"] = \
             df.groupby("molecule_name")[col].transform("count")
 
     for cat_col in tqdm(cat_cols):
         for num_col in tqdm(num_cols):
             for agg in aggs:
-                col = f"molecule_{cat_col}_{num_col}_{agg}"
+                col = f"molecule__{cat_col}__{num_col}__{agg}"
                 df[col] = df.groupby(["molecule_name", cat_col])[num_col] \
                             .transform(agg)
                 if agg == "std":
                     df[col] = df[col].fillna(0)
 
-                df[col + "_diff"] = df[col] - df[num_col]
+                df[col + "__diff"] = df[col] - df[num_col]
 
-                df[col + "_div"] = df[col] / df[num_col]
-                df[col + "_div"] = df[col + "_div"].fillna(
-                    df[col + "_div"].max() * 10)
+                df[col + "__div"] = df[col] / df[num_col]
+                df[col + "__div"] = df[col + "__div"].fillna(
+                    df[col + "__div"].max() * 10)
 
     return df
 
 
-def create_features(df):
-    return preprocess_helper.create_features(df)
+def create_basic_features(df):
+    df["molecule_couples"] = \
+        df.groupby("molecule_name")["id"].transform("count")
+    df["molecule_dist_mean"] = \
+        df.groupby("molecule_name")["dist"].transform("mean")
+    df["molecule_dist_min"] = \
+        df.groupby("molecule_name")["dist"].transform("min")
+    df["molecule_dist_max"] = \
+        df.groupby("molecule_name")["dist"].transform("max")
+    df["atom_0_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_0"])["id"].transform("count")
+    df["atom_1_couples_count"] = \
+        df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
+
+    return df
 
 
-def get_good_columns():
-    return preprocess_helper.get_good_columns()
+def create_extra_features(df, good_columns):
+    columns = [g.split("__") for g in good_columns]
+    columns = sorted(columns, key=lambda x: len(x))
+    for cols in tqdm(columns):
+        if len(cols) == 1:
+            continue
+        elif len(cols) == 3:
+            _, col, _ = cols
+            df[f"molecule__{col}__count"] = \
+                df.groupby("molecule_name")[col].transform("count")
+        elif len(cols) == 4:
+            _, cat, num, agg = cols
+            col = f"molecule__{cat}__{num}__{agg}"
+            df[col] = df.groupby(["molecule_name", cat])[num] \
+                        .transform(agg)
+            if agg == "std":
+                df[col] = df[col].fillna(0)
+        elif len(cols) == 5:
+            _, cat, num, agg, cal = cols
+            col = f"molecule__{cat}__{num}__{agg}"
+            if col not in df.columns:
+                df[col] = df.groupby(["molecule_name", cat])[num] \
+                            .transform(agg)
+                if agg == "std":
+                    df[col] = df[col].fillna(0)
+
+            if cal == "diff":
+                df[col + "__diff"] = df[col] - df[num]
+
+            if cal == "div":
+                df[col + "__div"] = df[col] / df[num]
+                df[col + "__div"] = df[col + "__div"].fillna(
+                    df[col + "__div"].max() * 10)
+    return df
+
+
+def get_good_columns(file_folder="../data", col_num=50):
+    importance = pd.read_csv(f"{file_folder}/feature_importance.csv")
+    importance = \
+        importance.groupby(["feature"]).mean() \
+        .sort_values(by=["importance"], ascending=False)
+    good_columns = list(importance.index.values)[:col_num]
+    good_columns.append("type")
+    return good_columns
 
 
 def get_atom_rad_en(structures):
@@ -184,8 +238,7 @@ def calc_bonds(structures):
     return structures
 
 
-def encode_str(train, test):
-    good_columns = get_good_columns()
+def encode_str(train, test, good_columns):
     for f in ["atom_0", "atom_1", "type_0", "type"]:
         if f in good_columns:
             lbl = LabelEncoder()

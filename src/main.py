@@ -42,10 +42,14 @@ def preprocess_data(train, test, structures, contrib):
     train["type_0"] = train["type"].apply(lambda x: x[0])
     test["type_0"] = test["type"].apply(lambda x: x[0])
 
-    train = preprocess.create_features(train)
-    test = preprocess.create_features(test)
+    good_columns = preprocess.get_good_columns()
 
-    train, test = preprocess.encode_str(train, test)
+    train = preprocess.create_basic_features(train)
+    test = preprocess.create_basic_features(test)
+    train = preprocess.create_extra_features(train, good_columns)
+    test = preprocess.create_extra_features(test, good_columns)
+
+    train, test = preprocess.encode_str(train, test, good_columns)
 
     return train, test
 
