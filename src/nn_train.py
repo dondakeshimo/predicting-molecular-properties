@@ -3,7 +3,15 @@ from keras import callbacks
 from keras.layers import Input, Dense, BatchNormalization, Dropout
 from keras.models import Model
 import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 import time
+
+
+def fit_scale_data(X, X_test):
+    scaler = StandardScaler()
+    scaler.fit(pd.concat([X, X_test]))
+    return scaler.transform(X), scaler.transform(X_test)
 
 
 def create_nn_model(input_shape):
@@ -27,7 +35,6 @@ def create_nn_model(input_shape):
     x = BatchNormalization()(x)
     output = Dense(1, activation="linear")(x)
     model = Model(inputs=input, outputs=output)
-    print(model.summary)
     return model
 
 

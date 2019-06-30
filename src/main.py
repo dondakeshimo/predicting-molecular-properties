@@ -1,43 +1,24 @@
-import artgor_utils
-import nn_train
 import os
 import pandas as pd
-import pickle
 import preprocess
 from sklearn.model_selection import KFold
+
+import artgor_utils
+import handle_files
+import nn_train
 
 
 def load_n_preprocess_data(file_folder, init_flag=False):
     if not init_flag and \
        os.path.exists(f"{file_folder}/train.pickle") and \
        os.path.exists(f"{file_folder}/train.pickle"):
-        return load_data_from_pickle(file_folder)
+        return handle_files.load_data_from_pickle(file_folder)
     else:
-        train, test, structures, contrib = load_data_from_csv(file_folder)
+        train, test, structures, contrib = \
+            handle_files.load_data_from_csv(file_folder)
         train, test = preprocess_data(train, test, structures, contrib)
-        dump_data_as_pickle(train, test)
+        handle_files.dump_data_as_pickle(train, test)
         return train, test
-
-
-def load_data_from_pickle(file_folder):
-    print(f"load data from {file_folder}/train.pickle")
-    with open(f"{file_folder}/train.pickle", "rb") as f:
-        train = pickle.load(f)
-
-    with open(f"{file_folder}/test.pickle", "rb") as f:
-        test = pickle.load(f)
-
-    return train, test
-
-
-def load_data_from_csv(file_folder):
-    print(f"load data from {file_folder}/train.csv")
-    train = pd.read_csv(f"{file_folder}/train.csv")
-    test = pd.read_csv(f"{file_folder}/test.csv")
-    structures = pd.read_csv(f"{file_folder}/structures.csv")
-    contrib = pd.read_csv(f"{file_folder}/scalar_coupling_contributions.csv")
-
-    return train, test, structures, contrib
 
 
 def preprocess_data(train, test, structures, contrib):
@@ -61,20 +42,16 @@ def preprocess_data(train, test, structures, contrib):
     train["type_0"] = train["type"].apply(lambda x: x[0])
     test["type_0"] = test["type"].apply(lambda x: x[0])
 
-    train = preprocess.create_features(train)
-    test = preprocess.create_features(test)
+    good_columns = preprocess.get_good_columns()
 
-    train, test = preprocess.encode_str(train, test)
+    train = preprocess.create_basic_features(train)
+    test = preprocess.create_basic_features(test)
+    train = preprocess.create_extra_features(train, good_columns)
+    test = preprocess.create_extra_features(test, good_columns)
+
+    train, test = preprocess.encode_str(train, test, good_columns)
 
     return train, test
-
-
-def dump_data_as_pickle(train, test):
-    with open('../data/train.pickle', 'wb') as f:
-        pickle.dump(train, f)
-
-    with open('../data/test.pickle', 'wb') as f:
-        pickle.dump(test, f)
 
 
 def train_each_type_with_lgb(X, X_test, y, folds):
@@ -136,6 +113,7 @@ def train_each_type_with_nn(X, X_test, y, folds):
         print(f"Training of type {t}")
         X_t = X.loc[X["type"] == t]
         X_test_t = X_test.loc[X_test["type"] == t]
+        X_t, X_test_t = nn_train.fit_scale_data(X_t, X_test_t)
         y_t = X_short.loc[X_short["type"] == t, "target"]
         result_dict_lgb = nn_train.train_nn_model(
             X=X_t, X_test=X_test_t, y=y_t, folds=folds,

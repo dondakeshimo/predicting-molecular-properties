@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
+
+import artgor_utils
+import handle_files
 
 
 def map_atom_info(df, structures, atom_idx):
@@ -54,28 +58,28 @@ def create_features_full(df):
     cat_cols = ["atom_index_0", "atom_index_1", "type", "atom_1", "type_0"]
     aggs = ["mean", "max", "std", "min"]
     for col in cat_cols:
-        df[f"molecule_{col}_count"] = \
+        df[f"molecule__{col}__count"] = \
             df.groupby("molecule_name")[col].transform("count")
 
     for cat_col in tqdm(cat_cols):
         for num_col in tqdm(num_cols):
             for agg in aggs:
-                col = f"molecule_{cat_col}_{num_col}_{agg}"
+                col = f"molecule__{cat_col}__{num_col}__{agg}"
                 df[col] = df.groupby(["molecule_name", cat_col])[num_col] \
                             .transform(agg)
                 if agg == "std":
                     df[col] = df[col].fillna(0)
 
-                df[col + "_diff"] = df[col] - df[num_col]
+                df[col + "__diff"] = df[col] - df[num_col]
 
-                df[col + "_div"] = df[col] / df[num_col]
-                df[col + "_div"] = df[col + "_div"].fillna(
-                    df[col + "_div"].max() * 10)
+                df[col + "__div"] = df[col] / df[num_col]
+                df[col + "__div"] = df[col + "__div"].fillna(
+                    df[col + "__div"].max() * 10)
 
     return df
 
 
-def create_features(df):
+def create_basic_features(df):
     df["molecule_couples"] = \
         df.groupby("molecule_name")["id"].transform("count")
     df["molecule_dist_mean"] = \
@@ -89,184 +93,53 @@ def create_features(df):
     df["atom_1_couples_count"] = \
         df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
 
-    df[f"molecule_atom_index_0_x_1_std"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["x_1"].transform("std")
-    df[f"molecule_atom_index_0_x_1_std"] = \
-        df[f"molecule_atom_index_0_x_1_std"].fillna(0)
-    df[f"molecule_atom_index_0_y_1_mean"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("mean")
-    df[f"molecule_atom_index_0_y_1_mean_diff"] = \
-        df[f"molecule_atom_index_0_y_1_mean"] - df["y_1"]
-    df[f"molecule_atom_index_0_y_1_mean_div"] = \
-        df[f"molecule_atom_index_0_y_1_mean"] / df["y_1"]
-    df[f"molecule_atom_index_0_y_1_mean_div"] = \
-        df[f"molecule_atom_index_0_y_1_mean"].fillna(
-            df[f"molecule_atom_index_0_y_1_mean"].max() * 10)
-    df[f"molecule_atom_index_0_y_1_max"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("max")
-    df[f"molecule_atom_index_0_y_1_max_diff"] = \
-        df[f"molecule_atom_index_0_y_1_max"] - df["y_1"]
-    df[f"molecule_atom_index_0_y_1_std"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["y_1"].transform("std")
-    df[f"molecule_atom_index_0_y_1_std"] = \
-        df[f"molecule_atom_index_0_y_1_std"].fillna(0)
-    df[f"molecule_atom_index_0_z_1_std"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["z_1"].transform("std")
-    df[f"molecule_atom_index_0_z_1_std"] = \
-        df[f"molecule_atom_index_0_z_1_std"].fillna(0)
-    df[f"molecule_atom_index_0_dist_mean"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("mean")
-    df[f"molecule_atom_index_0_dist_mean_diff"] = \
-        df[f"molecule_atom_index_0_dist_mean"] - df["dist"]
-    df[f"molecule_atom_index_0_dist_mean_div"] = \
-        df[f"molecule_atom_index_0_dist_mean"] / df["dist"]
-    df[f"molecule_atom_index_0_dist_max"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("max")
-    df[f"molecule_atom_index_0_dist_max_diff"] = \
-        df[f"molecule_atom_index_0_dist_max"] - df["dist"]
-    df[f"molecule_atom_index_0_dist_max_div"] = \
-        df[f"molecule_atom_index_0_dist_max"] / df["dist"]
-    df[f"molecule_atom_index_0_dist_min"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("min")
-    df[f"molecule_atom_index_0_dist_min_diff"] = \
-        df[f"molecule_atom_index_0_dist_min"] - df["dist"]
-    df[f"molecule_atom_index_0_dist_min_div"] = \
-        df[f"molecule_atom_index_0_dist_min"] / df["dist"]
-    df[f"molecule_atom_index_0_dist_std"] = \
-        df.groupby(["molecule_name", "atom_index_0"])["dist"].transform("std")
-    df[f"molecule_atom_index_0_dist_std"] = \
-        df[f"molecule_atom_index_0_dist_std"].fillna(0)
-    df[f"molecule_atom_index_0_dist_std_diff"] = \
-        df[f"molecule_atom_index_0_dist_std"] - df["dist"]
-    df[f"molecule_atom_index_0_dist_std_div"] = \
-        df[f"molecule_atom_index_0_dist_std"] / df["dist"]
-    df[f"molecule_atom_index_0_dist_std_div"] = \
-        df[f"molecule_atom_index_0_dist_std_div"].fillna(
-            df[f"molecule_atom_index_0_dist_std_div"].max() * 10)
-    df[f"molecule_atom_index_1_dist_mean"] = \
-        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("mean")
-    df[f"molecule_atom_index_1_dist_mean_diff"] = \
-        df[f"molecule_atom_index_1_dist_mean"] - df["dist"]
-    df[f"molecule_atom_index_1_dist_mean_div"] = \
-        df[f"molecule_atom_index_1_dist_mean"] / df["dist"]
-    df[f"molecule_atom_index_1_dist_max"] = \
-        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("max")
-    df[f"molecule_atom_index_1_dist_max_diff"] = \
-        df[f"molecule_atom_index_1_dist_max"] - df["dist"]
-    df[f"molecule_atom_index_1_dist_max_div"] = \
-        df[f"molecule_atom_index_1_dist_max"] / df["dist"]
-    df[f"molecule_atom_index_1_dist_min"] = \
-        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("min")
-    df[f"molecule_atom_index_1_dist_min_diff"] = \
-        df[f"molecule_atom_index_1_dist_min"] - df["dist"]
-    df[f"molecule_atom_index_1_dist_min_div"] = \
-        df[f"molecule_atom_index_1_dist_min"] / df["dist"]
-    df[f"molecule_atom_index_1_dist_std"] = \
-        df.groupby(["molecule_name", "atom_index_1"])["dist"].transform("std")
-    df[f"molecule_atom_index_1_dist_std"] = \
-        df[f"molecule_atom_index_1_dist_std"].fillna(0)
-    df[f"molecule_atom_index_1_dist_std_diff"] = \
-        df[f"molecule_atom_index_1_dist_std"] - df["dist"]
-    df[f"molecule_atom_index_1_dist_std_div"] = \
-        df[f"molecule_atom_index_1_dist_std"] / df["dist"]
-    df[f"molecule_atom_index_1_dist_std_div"] = \
-        df[f"molecule_atom_index_1_dist_std_div"].fillna(
-            df[f"molecule_atom_index_1_dist_std_div"].max() * 10)
-    df[f"molecule_atom_1_dist_mean"] = \
-        df.groupby(["molecule_name", "atom_1"])["dist"].transform("mean")
-    df[f"molecule_atom_1_dist_min"] = \
-        df.groupby(["molecule_name", "atom_1"])["dist"].transform("min")
-    df[f"molecule_atom_1_dist_min_diff"] = \
-        df[f"molecule_atom_1_dist_min"] - df["dist"]
-    df[f"molecule_atom_1_dist_min_div"] = \
-        df[f"molecule_atom_1_dist_min"] / df["dist"]
-    df[f"molecule_atom_1_dist_std"] = \
-        df.groupby(["molecule_name", "atom_1"])["dist"].transform("std")
-    df[f"molecule_atom_1_dist_std"] = \
-        df[f"molecule_atom_1_dist_std"].fillna(0)
-    df[f"molecule_atom_1_dist_std_diff"] = \
-        df[f"molecule_atom_1_dist_std"] - df["dist"]
-    df[f"molecule_type_0_dist_std"] = \
-        df.groupby(["molecule_name", "type_0"])["dist"].transform("std")
-    df[f"molecule_type_0_dist_std"] = \
-        df[f"molecule_type_0_dist_std"].fillna(0)
-    df[f"molecule_type_0_dist_std_diff"] = \
-        df[f"molecule_type_0_dist_std"] - df["dist"]
-    df[f"molecule_type_dist_mean"] = \
-        df.groupby(["molecule_name", "type"])["dist"].transform("mean")
-    df[f"molecule_type_dist_mean_diff"] = \
-        df[f"molecule_type_dist_mean"] - df["dist"]
-    df[f"molecule_type_dist_mean_div"] = \
-        df[f"molecule_type_dist_mean"] / df["dist"]
-    df[f"molecule_type_dist_max"] = \
-        df.groupby(["molecule_name", "type"])["dist"].transform("max")
-    df[f"molecule_type_dist_min"] = \
-        df.groupby(["molecule_name", "type"])["dist"].transform("min")
-    df[f"molecule_type_dist_std"] = \
-        df.groupby(["molecule_name", "type"])["dist"].transform("std")
-    df[f"molecule_type_dist_std"] = \
-        df[f"molecule_type_dist_std"].fillna(0)
-    df[f"molecule_type_dist_std_diff"] = \
-        df[f"molecule_type_dist_std"] - df["dist"]
-
     return df
 
 
-def get_good_columns():
-    return [
-        "bond_lengths_mean_1",
-        "bond_lengths_std_1",
-        "bond_lengths_std_0",
-        "molecule_atom_index_0_dist_max",
-        "bond_lengths_mean_0",
-        "molecule_atom_index_0_dist_mean",
-        "molecule_atom_index_0_dist_std",
-        "molecule_couples",
-        "molecule_atom_index_0_y_1_std",
-        "molecule_dist_mean",
-        "molecule_dist_max",
-        "dist_y",
-        "molecule_atom_index_0_z_1_std",
-        "molecule_atom_index_1_dist_max",
-        "molecule_atom_index_1_dist_min",
-        "molecule_atom_index_0_x_1_std",
-        "molecule_atom_index_1_dist_std",
-        "molecule_atom_index_0_y_1_mean_div",
-        "y_0",
-        "molecule_atom_index_1_dist_mean",
-        "molecule_atom_1_dist_mean",
-        "x_0",
-        "dist_x",
-        "molecule_type_dist_std",
-        "dist_z",
-        "molecule_atom_index_1_dist_std_diff",
-        "molecule_type_dist_mean_diff",
-        "molecule_atom_index_0_dist_max_div",
-        "molecule_atom_1_dist_std",
-        "molecule_type_0_dist_std",
-        "z_0",
-        "molecule_type_dist_std_diff",
-        "molecule_atom_index_0_y_1_mean_diff",
-        "molecule_atom_index_0_dist_std_diff",
-        "molecule_atom_index_0_dist_mean_div",
-        "molecule_atom_index_0_dist_max_diff",
-        "x_1",
-        "molecule_type_dist_max",
-        "molecule_atom_index_0_dist_std_div",
-        "molecule_atom_index_0_dist_mean_diff",
-        "molecule_atom_1_dist_std_diff",
-        "molecule_atom_index_0_y_1_max_diff",
-        "z_1",
-        "molecule_atom_index_0_y_1_max",
-        "molecule_atom_index_0_y_1_mean",
-        "y_1",
-        "molecule_type_0_dist_std_diff",
-        "molecule_dist_min",
-        "molecule_atom_index_1_dist_std_div",
-        "molecule_atom_1_dist_min",
-        "molecule_atom_index_1_dist_max_diff",
-        "type"
-    ]
+def create_extra_features(df, good_columns):
+    columns = [g.split("__") for g in good_columns]
+    columns = sorted(columns, key=lambda x: len(x))
+    for cols in tqdm(columns):
+        if len(cols) == 1:
+            continue
+        elif len(cols) == 3:
+            _, col, _ = cols
+            df[f"molecule__{col}__count"] = \
+                df.groupby("molecule_name")[col].transform("count")
+        elif len(cols) == 4:
+            _, cat, num, agg = cols
+            col = f"molecule__{cat}__{num}__{agg}"
+            df[col] = df.groupby(["molecule_name", cat])[num] \
+                        .transform(agg)
+            if agg == "std":
+                df[col] = df[col].fillna(0)
+        elif len(cols) == 5:
+            _, cat, num, agg, cal = cols
+            col = f"molecule__{cat}__{num}__{agg}"
+            if col not in df.columns:
+                df[col] = df.groupby(["molecule_name", cat])[num] \
+                            .transform(agg)
+                if agg == "std":
+                    df[col] = df[col].fillna(0)
+
+            if cal == "diff":
+                df[col + "__diff"] = df[col] - df[num]
+
+            if cal == "div":
+                df[col + "__div"] = df[col] / df[num]
+                df[col + "__div"] = df[col + "__div"].fillna(
+                    df[col + "__div"].max() * 10)
+    return df
+
+
+def get_good_columns(file_folder="../data", col_num=50):
+    importance = pd.read_csv(f"{file_folder}/feature_importance.csv")
+    importance = \
+        importance.groupby(["feature"]).mean() \
+        .sort_values(by=["importance"], ascending=False)
+    good_columns = list(importance.index.values)[:col_num]
+    good_columns.append("type")
+    return good_columns
 
 
 def get_atom_rad_en(structures):
@@ -365,8 +238,7 @@ def calc_bonds(structures):
     return structures
 
 
-def encode_str(train, test):
-    good_columns = get_good_columns()
+def encode_str(train, test, good_columns):
     for f in ["atom_0", "atom_1", "type_0", "type"]:
         if f in good_columns:
             lbl = LabelEncoder()
@@ -375,3 +247,79 @@ def encode_str(train, test):
             test[f] = lbl.transform(list(test[f].values))
 
     return train, test
+
+
+def main():
+    file_folder = "../data"
+    train, test, structures, contrib = \
+        handle_files.load_data_from_csv(file_folder)
+
+    train = pd.merge(train, contrib, how="left",
+                     left_on=["molecule_name", "atom_index_0",
+                              "atom_index_1", "type"],
+                     right_on=["molecule_name", "atom_index_0",
+                               "atom_index_1", "type"])
+
+    structures = get_atom_rad_en(structures)
+    structures = calc_bonds(structures)
+
+    train = train.iloc[:100000]
+    test = test.iloc[:100000]
+
+    train = map_atom_info(train, structures, 0)
+    train = map_atom_info(train, structures, 1)
+    test = map_atom_info(test, structures, 0)
+    test = map_atom_info(test, structures, 1)
+
+    train = calc_dist(train)
+    test = calc_dist(test)
+
+    train["type_0"] = train["type"].apply(lambda x: x[0])
+    test["type_0"] = test["type"].apply(lambda x: x[0])
+
+    train = create_features_full(train)
+    test = create_features_full(test)
+
+    for f in tqdm(["atom_0", "atom_1", "type_0", "type"]):
+        lbl = LabelEncoder()
+        lbl.fit(list(train[f].values) + list(test[f].values))
+        train[f] = lbl.transform(list(train[f].values))
+        test[f] = lbl.transform(list(test[f].values))
+
+    X = train.drop(
+        ["id", "scalar_coupling_constant", "molecule_name",
+         "fc", "dso", "sd", "pso"], axis=1)
+    y = train["scalar_coupling_constant"]
+    X_test = test.drop(["id", "molecule_name"], axis=1)
+
+    n_fold = 3
+    folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
+
+    params = {"num_leaves": 128,
+              "min_child_samples": 79,
+              "objective": "regression",
+              "max_depth": 9,
+              "learning_rate": 0.2,
+              "boosting_type": "gbdt",
+              "subsample_freq": 1,
+              "subsample": 0.9,
+              "bagging_seed": 11,
+              "metric": "mae",
+              "verbosity": -1,
+              "reg_alpha": 0.1,
+              "reg_lambda": 0.3,
+              "colsample_bytree": 1.0
+              }
+
+    result_dict_lgb = artgor_utils.train_model_regression(
+        X=X, X_test=X_test, y=y, params=params, folds=folds,
+        model_type="lgb", eval_metric="group_mae",
+        plot_feature_importance=True,
+        verbose=300, early_stopping_rounds=1000, n_estimators=3000)
+
+    result_dict_lgb["feature_importance"].to_csv(
+        f"{file_folder}/feature_importance.csv", index=False)
+
+
+if __name__ == "__main__":
+    main()
