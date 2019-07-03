@@ -247,6 +247,39 @@ def encode_str(train, test, good_columns):
     return train, test
 
 
+def preprocess(train, test, structures, contrib):
+    train = pd.merge(train, contrib, how="left",
+                     left_on=["molecule_name", "atom_index_0",
+                              "atom_index_1", "type"],
+                     right_on=["molecule_name", "atom_index_0",
+                               "atom_index_1", "type"])
+
+    structures = get_atom_rad_en(structures)
+    structures = calc_bonds(structures)
+
+    train = map_atom_info(train, structures, 0)
+    train = map_atom_info(train, structures, 1)
+    test = map_atom_info(test, structures, 0)
+    test = map_atom_info(test, structures, 1)
+
+    train = calc_dist(train)
+    test = calc_dist(test)
+
+    train["type_0"] = train["type"].apply(lambda x: x[0])
+    test["type_0"] = test["type"].apply(lambda x: x[0])
+
+    good_columns = get_good_columns()
+
+    train = create_basic_features(train)
+    test = create_basic_features(test)
+    train = create_extra_features(train, good_columns)
+    test = create_extra_features(test, good_columns)
+
+    train, test = encode_str(train, test, good_columns)
+
+    return train, test
+
+
 def main():
     file_folder = "../data"
     train, test, structures, contrib = \

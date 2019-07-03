@@ -16,42 +16,9 @@ def load_n_preprocess_data(file_folder, init_flag=False):
     else:
         train, test, structures, contrib = \
             handle_files.load_data_from_csv(file_folder)
-        train, test = preprocess_data(train, test, structures, contrib)
+        train, test = preprocess.preprocess(train, test, structures, contrib)
         handle_files.dump_data_as_pickle(train, test)
         return train, test
-
-
-def preprocess_data(train, test, structures, contrib):
-    train = pd.merge(train, contrib, how="left",
-                     left_on=["molecule_name", "atom_index_0",
-                              "atom_index_1", "type"],
-                     right_on=["molecule_name", "atom_index_0",
-                               "atom_index_1", "type"])
-
-    structures = preprocess.get_atom_rad_en(structures)
-    structures = preprocess.calc_bonds(structures)
-
-    train = preprocess.map_atom_info(train, structures, 0)
-    train = preprocess.map_atom_info(train, structures, 1)
-    test = preprocess.map_atom_info(test, structures, 0)
-    test = preprocess.map_atom_info(test, structures, 1)
-
-    train = preprocess.calc_dist(train)
-    test = preprocess.calc_dist(test)
-
-    train["type_0"] = train["type"].apply(lambda x: x[0])
-    test["type_0"] = test["type"].apply(lambda x: x[0])
-
-    good_columns = preprocess.get_good_columns()
-
-    train = preprocess.create_basic_features(train)
-    test = preprocess.create_basic_features(test)
-    train = preprocess.create_extra_features(train, good_columns)
-    test = preprocess.create_extra_features(test, good_columns)
-
-    train, test = preprocess.encode_str(train, test, good_columns)
-
-    return train, test
 
 
 def train_each_type_with_lgb(X, X_test, y, folds):
