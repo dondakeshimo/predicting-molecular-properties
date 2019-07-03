@@ -73,8 +73,7 @@ def create_features_full(df):
                 df[col + "__diff"] = df[col] - df[num_col]
 
                 df[col + "__div"] = df[col] / df[num_col]
-                df[col + "__div"] = df[col + "__div"].fillna(
-                    df[col + "__div"].max() * 10)
+                df[col + "__div"] = df[col] / df[num_col].replace(0, 1e-10)
 
     return df
 
@@ -126,9 +125,8 @@ def create_extra_features(df, good_columns):
                 df[col + "__diff"] = df[col] - df[num]
 
             if cal == "div":
-                df[col + "__div"] = df[col] / df[num]
-                df[col + "__div"] = df[col + "__div"].fillna(
-                    df[col + "__div"].max() * 10)
+                df[col + "__div"] = df[col] / df[num].replace(0, 1e-10)
+
     return df
 
 
