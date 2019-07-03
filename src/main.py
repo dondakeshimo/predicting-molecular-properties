@@ -114,7 +114,7 @@ def train_each_type_with_nn(X, X_test, y, folds):
         X_t = X.loc[X["type"] == t]
         X_test_t = X_test.loc[X_test["type"] == t]
         X_t, X_test_t = nn_train.fit_scale_data(X_t, X_test_t)
-        y_t = X_short.loc[X_short["type"] == t, "target"]
+        y_t = X_short.loc[X_short["type"] == t, "target"].values
         result_dict_lgb = nn_train.train_nn_model(
             X=X_t, X_test=X_test_t, y=y_t, folds=folds,
             verbose=2, epochs=10, batch_size=32)
