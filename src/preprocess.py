@@ -280,11 +280,8 @@ def preprocess(train, test, structures, contrib):
     return train, test
 
 
-def main():
-    file_folder = "../data"
-    train, test, structures, contrib = \
-        handle_files.load_data_from_csv(file_folder)
-
+def create_feature_importance(train, test, structures, contrib,
+                              data_num=100000):
     train = pd.merge(train, contrib, how="left",
                      left_on=["molecule_name", "atom_index_0",
                               "atom_index_1", "type"],
@@ -294,8 +291,8 @@ def main():
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
 
-    train = train.iloc[:100000]
-    test = test.iloc[:100000]
+    train = train.iloc[:data_num]
+    test = test.iloc[:data_num]
 
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)
@@ -311,46 +308,10 @@ def main():
     train = create_features_full(train)
     test = create_features_full(test)
 
-    for f in tqdm(["atom_0", "atom_1", "type_0", "type"]):
-        lbl = LabelEncoder()
-        lbl.fit(list(train[f].values) + list(test[f].values))
-        train[f] = lbl.transform(list(train[f].values))
-        test[f] = lbl.transform(list(test[f].values))
-
-    X = train.drop(
+    full_columns = train.drop(
         ["id", "scalar_coupling_constant", "molecule_name",
-         "fc", "dso", "sd", "pso"], axis=1)
-    y = train["scalar_coupling_constant"]
-    X_test = test.drop(["id", "molecule_name"], axis=1)
+         "fc", "dso", "sd", "pso"], axis=1).columns
 
-    n_fold = 3
-    folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
+    train, test = encode_str(train, test, full_columns)
 
-    params = {"num_leaves": 128,
-              "min_child_samples": 79,
-              "objective": "regression",
-              "max_depth": 9,
-              "learning_rate": 0.2,
-              "boosting_type": "gbdt",
-              "subsample_freq": 1,
-              "subsample": 0.9,
-              "bagging_seed": 11,
-              "metric": "mae",
-              "verbosity": -1,
-              "reg_alpha": 0.1,
-              "reg_lambda": 0.3,
-              "colsample_bytree": 1.0
-              }
-
-    result_dict_lgb = artgor_utils.train_model_regression(
-        X=X, X_test=X_test, y=y, params=params, folds=folds,
-        model_type="lgb", eval_metric="group_mae",
-        plot_feature_importance=True,
-        verbose=300, early_stopping_rounds=1000, n_estimators=3000)
-
-    result_dict_lgb["feature_importance"].to_csv(
-        f"{file_folder}/feature_importance.csv", index=False)
-
-
-if __name__ == "__main__":
-    main()
+    return train, test
