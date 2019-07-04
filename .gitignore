@@ -12,7 +12,3 @@ src/draft.py
 
 ### pyenv ###
 .python-version
-
-### data ###
-data/*
-!data/.gitkeep
