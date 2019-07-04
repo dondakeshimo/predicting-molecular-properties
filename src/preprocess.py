@@ -2,10 +2,6 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold
-
-import artgor_utils
-import handle_files
 
 
 def map_atom_info(df, structures, atom_idx):
