@@ -5,6 +5,7 @@ from sklearn.preprocessing import LabelEncoder
 
 
 def map_atom_info(df, structures, atom_idx):
+    print("Merge structures with train dataframe")
     df = pd.merge(df, structures, how="left",
                   left_on=["molecule_name", f"atom_index_{atom_idx}"],
                   right_on=["molecule_name", "atom_index"])
@@ -25,6 +26,7 @@ def map_atom_info(df, structures, atom_idx):
 
 
 def calc_dist(df):
+    print("Calculate distance between atom")
     df_p_0 = df[["x_0", "y_0", "z_0"]].values
     df_p_1 = df[["x_1", "y_1", "z_1"]].values
 
@@ -37,6 +39,7 @@ def calc_dist(df):
 
 
 def create_features_full(df):
+    print("Create full brute force features")
     df["molecule_couples"] = \
         df.groupby("molecule_name")["id"].transform("count")
     df["molecule_dist_mean"] = \
@@ -75,6 +78,7 @@ def create_features_full(df):
 
 
 def create_basic_features(df):
+    print("Create basic static features")
     df["molecule_couples"] = \
         df.groupby("molecule_name")["id"].transform("count")
     df["molecule_dist_mean"] = \
@@ -92,6 +96,7 @@ def create_basic_features(df):
 
 
 def create_extra_features(df, good_columns):
+    print("Create brute force features in good columns")
     columns = [g.split("__") for g in good_columns]
     columns = sorted(columns, key=lambda x: len(x))
     for cols in tqdm(columns):
@@ -127,6 +132,7 @@ def create_extra_features(df, good_columns):
 
 
 def get_good_columns(file_folder="../data", col_num=50):
+    print(f"Get good columns from {file_folder}/feature_importance.csv")
     importance = pd.read_csv(f"{file_folder}/feature_importance.csv")
     importance = \
         importance.groupby(["feature"]).mean() \
@@ -137,6 +143,7 @@ def get_good_columns(file_folder="../data", col_num=50):
 
 
 def get_atom_rad_en(structures):
+    print("Add atom radius and lelectro negativity to structures")
     atomic_radius = {"H": 0.38, "C": 0.77, "N": 0.75, "O": 0.73, "F": 0.71}
 
     fudge_factor = 0.05
@@ -233,6 +240,7 @@ def calc_bonds(structures):
 
 
 def encode_str(train, test, good_columns):
+    print("Encoding strings")
     for f in ["atom_0", "atom_1", "type_0", "type"]:
         if f in good_columns:
             lbl = LabelEncoder()

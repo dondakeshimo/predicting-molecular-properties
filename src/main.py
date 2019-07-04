@@ -110,7 +110,7 @@ def train_each_type_with_nn(X, X_test, y, folds):
         y_t = X_short.loc[X_short["type"] == t, "target"].values
         result_dict_lgb = nn_train.train_nn_model(
             X=X_t, X_test=X_test_t, y=y_t, folds=folds,
-            verbose=2, epochs=10, batch_size=32)
+            verbose=1, epochs=10, batch_size=32)
         X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
         X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
             result_dict_lgb["prediction"]
@@ -133,6 +133,8 @@ def main_importance(args):
     y = train["scalar_coupling_constant"]
     X_test = test[full_columns].copy()
 
+    del train, test
+
     n_fold = 3
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
 
@@ -152,6 +154,8 @@ def main_fc(args):
     X = train[good_columns].copy()
     y_fc = train["fc"]
     X_test = test[good_columns].copy()
+
+    del train, test
 
     n_fold = 3
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
@@ -177,6 +181,8 @@ def main_lgb(args):
     X = train[good_columns].copy()
     y = train["scalar_coupling_constant"]
     X_test = test[good_columns].copy()
+
+    del train, test
 
     if args.oof_fc_flag:
         df_train_oof_fc = pd.read_csv(f"{file_folder}/train_oof_fc.csv")
@@ -211,6 +217,8 @@ def main_nn(args):
     y = train["scalar_coupling_constant"]
     X_test = test[good_columns].copy()
 
+    del train, test
+
     if args.oof_fc_flag:
         df_train_oof_fc = pd.read_csv(f"{file_folder}/train_oof_fc.csv")
         df_test_oof_fc = pd.read_csv(f"{file_folder}/test_oof_fc.csv")
@@ -235,15 +243,19 @@ def main_nn(args):
 
 def main(args):
     if args.mode.upper() == "IMPORTANCE":
+        print("RUN: create feature importance mode")
         main_importance(args)
 
     elif args.mode.upper() == "FC":
+        print("RUN: train target fc mode")
         main_fc(args)
 
     elif args.mode.upper() == "LGB":
+        print("RUN: train with LGB mode")
         main_lgb(args)
 
     elif args.mode.upper() == "NN":
+        print("RUN: train with NN mode")
         main_nn(args)
 
 

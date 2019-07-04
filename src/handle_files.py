@@ -24,6 +24,7 @@ def load_data_from_csv(file_folder):
 
 
 def dump_data_as_pickle(train, test):
+    print(f"dump data to ../data/")
     with open('../data/train.pickle', 'wb') as f:
         pickle.dump(train, f)
 
