@@ -237,7 +237,7 @@ def main_nn(args):
 
     df_train_oof_nn = pd.DataFrame({"train_oof_nn": X_nn["oof"]})
     df_nn_prediction = pd.DataFrame(
-        {"lgb_prediction": X_nn_test["prediction"]})
+        {"nn_prediction": X_nn_test["prediction"]})
 
     df_train_oof_nn.to_csv(
         f"{file_folder}/predicted/train_oof_nn.csv", index=False)
