@@ -11,8 +11,8 @@ import nn_train
 
 def load_n_preprocess_data(file_folder, init_flag=False):
     if not init_flag and \
-       os.path.exists(f"{file_folder}/train.pickle") and \
-       os.path.exists(f"{file_folder}/train.pickle"):
+       os.path.exists(f"{file_folder}/preprocessed/train.pickle") and \
+       os.path.exists(f"{file_folder}/preprocessed/train.pickle"):
         return handle_files.load_data_from_pickle(file_folder)
     else:
         train, test, structures, contrib = \
@@ -141,7 +141,7 @@ def main_importance(args):
     result_dict_lgb = train_full_with_lgb(X, X_test, y, folds)
 
     result_dict_lgb["feature_importance"].to_csv(
-        f"{file_folder}/feature_importance.csv", index=False)
+        f"{file_folder}/preprocessed/feature_importance.csv", index=False)
 
 
 def main_fc(args):
@@ -166,9 +166,9 @@ def main_fc(args):
     df_test_oof_fc = pd.DataFrame({"test_oof_fc": X_fc_test["prediction"]})
 
     df_train_oof_fc.to_csv(
-        f"{file_folder}/train_oof_fc.csv", index=False)
+        f"{file_folder}/preprocessed/train_oof_fc.csv", index=False)
     df_test_oof_fc.to_csv(
-        f"{file_folder}/test_oof_fc.csv", index=False)
+        f"{file_folder}/preprocessed/test_oof_fc.csv", index=False)
 
 
 def main_lgb(args):
@@ -185,8 +185,10 @@ def main_lgb(args):
     del train, test
 
     if args.oof_fc_flag:
-        df_train_oof_fc = pd.read_csv(f"{file_folder}/train_oof_fc.csv")
-        df_test_oof_fc = pd.read_csv(f"{file_folder}/test_oof_fc.csv")
+        df_train_oof_fc = pd.read_csv(
+            f"{file_folder}/preprocessed/train_oof_fc.csv")
+        df_test_oof_fc = pd.read_csv(
+            f"{file_folder}/preprocessed/test_oof_fc.csv")
         X["oof_fc"] = df_train_oof_fc["train_oof_fc"].values
         X_test["oof_fc"] = df_test_oof_fc["test_oof_fc"].values
 
@@ -201,9 +203,9 @@ def main_lgb(args):
         {"lgb_prediction": X_lgb_test["prediction"]})
 
     df_train_oof_lgb.to_csv(
-        f"{file_folder}/train_oof_lgb.csv", index=False)
+        f"{file_folder}/predicted/train_oof_lgb.csv", index=False)
     df_lgb_prediction.to_csv(
-        f"{file_folder}/lgb_prediction.csv", index=False)
+        f"{file_folder}/predicted/lgb_prediction.csv", index=False)
 
 
 def main_nn(args):
@@ -220,8 +222,10 @@ def main_nn(args):
     del train, test
 
     if args.oof_fc_flag:
-        df_train_oof_fc = pd.read_csv(f"{file_folder}/train_oof_fc.csv")
-        df_test_oof_fc = pd.read_csv(f"{file_folder}/test_oof_fc.csv")
+        df_train_oof_fc = pd.read_csv(
+            f"{file_folder}/preprocessed/train_oof_fc.csv")
+        df_test_oof_fc = pd.read_csv(
+            f"{file_folder}/preprocessed/test_oof_fc.csv")
         X["oof_fc"] = df_train_oof_fc["train_oof_fc"].values
         X_test["oof_fc"] = df_test_oof_fc["test_oof_fc"].values
 
@@ -236,9 +240,9 @@ def main_nn(args):
         {"lgb_prediction": X_nn_test["prediction"]})
 
     df_train_oof_nn.to_csv(
-        f"{file_folder}/train_oof_nn.csv", index=False)
+        f"{file_folder}/predicted/train_oof_nn.csv", index=False)
     df_nn_prediction.to_csv(
-        f"{file_folder}/nn_prediction.csv", index=False)
+        f"{file_folder}/predicted/nn_prediction.csv", index=False)
 
 
 def main(args):

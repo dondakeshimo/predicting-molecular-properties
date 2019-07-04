@@ -132,8 +132,9 @@ def create_extra_features(df, good_columns):
 
 
 def get_good_columns(file_folder="../data", col_num=50):
-    print(f"Get good columns from {file_folder}/feature_importance.csv")
-    importance = pd.read_csv(f"{file_folder}/feature_importance.csv")
+    print(f"Get good columns from {file_folder}/preprocessed/feat...ance.csv")
+    importance = pd.read_csv(
+        f"{file_folder}/preprocessed/feature_importance.csv")
     importance = \
         importance.groupby(["feature"]).mean() \
         .sort_values(by=["importance"], ascending=False)
