@@ -12,3 +12,7 @@ src/draft.py
 
 ### pyenv ###
 .python-version
+
+### Slack_notify.py ###
+slack_url.txt
+
