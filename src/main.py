@@ -4,8 +4,8 @@ import pandas as pd
 import preprocess
 from sklearn.model_selection import KFold
 
-import artgor_utils
 import handle_files
+import lgb_train
 import nn_train
 
 
@@ -39,7 +39,7 @@ def train_full_with_lgb(X, X_test, y, folds):
               "colsample_bytree": 1.0
               }
 
-    result_dict_lgb = artgor_utils.train_model_regression(
+    result_dict_lgb = lgb_train.train_lgb_model(
         X=X, X_test=X_test, y=y, params=params, folds=folds, model_type="lgb",
         eval_metric="group_mae", plot_feature_importance=True,
         verbose=300, early_stopping_rounds=1000, n_estimators=3000)
@@ -75,15 +75,16 @@ def train_each_type_with_lgb(X, X_test, y, folds):
          "prediction": [0] * len(X_test)})
 
     for t in X["type"].unique():
+        print("==============================================================")
         print(f"Training of type {t}")
         X_t = X.loc[X["type"] == t]
         X_test_t = X_test.loc[X_test["type"] == t]
         y_t = X_short.loc[X_short["type"] == t, "target"]
-        result_dict_lgb = artgor_utils.train_model_regression(
+        result_dict_lgb = lgb_train.train_lgb_model(
             X=X_t, X_test=X_test_t, y=y_t, params=params, folds=folds,
             model_type="lgb", eval_metric="group_mae",
             plot_feature_importance=False,
-            verbose=5, early_stopping_rounds=5, n_estimators=10)
+            verbose=500, early_stopping_rounds=200, n_estimators=4000)
         X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
         X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
             result_dict_lgb["prediction"]
