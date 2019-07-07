@@ -34,6 +34,7 @@ def calc_dist(df):
     df["dist_x"] = (df["x_0"] - df["x_1"]) ** 2
     df["dist_y"] = (df["y_0"] - df["y_1"]) ** 2
     df["dist_z"] = (df["z_0"] - df["z_1"]) ** 2
+    df["dist_div_p3"] = 1 / (df["dist"].replace(0, 1e-10) ** 3)
 
     return df
 
@@ -53,7 +54,8 @@ def create_features_full(df):
     df["atom_1_couples_count"] = \
         df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
 
-    num_cols = ["x_1", "y_1", "z_1", "dist", "dist_x", "dist_y", "dist_z"]
+    num_cols = ["x_1", "y_1", "z_1",
+                "dist", "dist_x", "dist_y", "dist_z", "dist_div_p3"]
     cat_cols = ["atom_index_0", "atom_index_1", "type", "atom_1", "type_0"]
     aggs = ["mean", "max", "std", "min"]
     for col in cat_cols:
@@ -227,9 +229,9 @@ def calc_bonds(structures):
         for j, row in enumerate(tqdm(bond_dists))
     ]
 
-    bond_lengths_mean = [np.mean(x) for x in bond_lengths]
-    bond_lengths_std = [np.std(x) for x in bond_lengths]
-    n_bonds = [len(x) for x in bonds_numeric]
+    bond_lengths_mean = [np.mean(x) for x in tqdm(bond_lengths)]
+    bond_lengths_std = [np.std(x) for x in tqdm(bond_lengths)]
+    n_bonds = [len(x) for x in tqdm(bonds_numeric)]
 
     bond_data = {"n_bonds": n_bonds,
                  "bond_lengths_mean": bond_lengths_mean,
@@ -285,8 +287,7 @@ def preprocess(train, test, structures, contrib):
     return train, test
 
 
-def create_feature_importance(train, test, structures, contrib,
-                              data_num=100000):
+def create_feature_importance(train, test, structures, contrib):
     train = pd.merge(train, contrib, how="left",
                      left_on=["molecule_name", "atom_index_0",
                               "atom_index_1", "type"],
@@ -295,9 +296,6 @@ def create_feature_importance(train, test, structures, contrib,
 
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
-
-    train = train.iloc[:data_num]
-    test = test.iloc[:data_num]
 
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)
