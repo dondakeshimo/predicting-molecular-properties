@@ -40,8 +40,8 @@ def train_full_with_lgb(X, X_test, y, folds):
               }
 
     result_dict_lgb = artgor_utils.train_model_regression(
-        X=X, X_test=X_test, y=y, params=params, folds=folds,
-        model_type="lgb", eval_metric="group_mae",
+        X=X, X_test=X_test, y=y, params=params, folds=folds, model_type="lgb",
+        eval_metric="group_mae", plot_feature_importance=True,
         verbose=300, early_stopping_rounds=1000, n_estimators=3000)
 
     return result_dict_lgb
