@@ -1,7 +1,7 @@
-from keras import backend as K
-from keras import callbacks
-from keras.layers import Input, Dense, BatchNormalization, Dropout
-from keras.models import Model
+from tensorflow.keras import backend as K
+from tensorflow.keras import callbacks
+from tensorflow.keras.layers import Input, Dense, BatchNormalization, Dropout
+from tensorflow.keras.models import Model
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler

@@ -6,13 +6,14 @@ pycache/
 src/__pycache__/
 src/draft.py
 
-
 ### Jupyter Notebook ###
 .ipynb_checkpoints
 
 ### pyenv ###
 .python-version
 
+### direnv ###
+.envrc
+
 ### Slack_notify.py ###
 slack_url.txt
-
