@@ -287,8 +287,7 @@ def preprocess(train, test, structures, contrib):
     return train, test
 
 
-def create_feature_importance(train, test, structures, contrib,
-                              data_num=100000):
+def create_feature_importance(train, test, structures, contrib):
     train = pd.merge(train, contrib, how="left",
                      left_on=["molecule_name", "atom_index_0",
                               "atom_index_1", "type"],
@@ -297,9 +296,6 @@ def create_feature_importance(train, test, structures, contrib,
 
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
-
-    train = train.iloc[:data_num]
-    test = test.iloc[:data_num]
 
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)
