@@ -34,6 +34,7 @@ def calc_dist(df):
     df["dist_x"] = (df["x_0"] - df["x_1"]) ** 2
     df["dist_y"] = (df["y_0"] - df["y_1"]) ** 2
     df["dist_z"] = (df["z_0"] - df["z_1"]) ** 2
+    df["dist_div_p3"] = 1 / (df["dist"].replace(0, 1e-10) ** 3)
 
     return df
 
@@ -53,7 +54,8 @@ def create_features_full(df):
     df["atom_1_couples_count"] = \
         df.groupby(["molecule_name", "atom_index_1"])["id"].transform("count")
 
-    num_cols = ["x_1", "y_1", "z_1", "dist", "dist_x", "dist_y", "dist_z"]
+    num_cols = ["x_1", "y_1", "z_1",
+                "dist", "dist_x", "dist_y", "dist_z", "dist_div_p3"]
     cat_cols = ["atom_index_0", "atom_index_1", "type", "atom_1", "type_0"]
     aggs = ["mean", "max", "std", "min"]
     for col in cat_cols:
