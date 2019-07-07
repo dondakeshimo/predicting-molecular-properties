@@ -6,9 +6,11 @@ pycache/
 src/__pycache__/
 src/draft.py
 
-
 ### Jupyter Notebook ###
 .ipynb_checkpoints
 
 ### pyenv ###
 .python-version
+
+### direnv ###
+.envrc
