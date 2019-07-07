@@ -229,9 +229,9 @@ def calc_bonds(structures):
         for j, row in enumerate(tqdm(bond_dists))
     ]
 
-    bond_lengths_mean = [np.mean(x) for x in bond_lengths]
-    bond_lengths_std = [np.std(x) for x in bond_lengths]
-    n_bonds = [len(x) for x in bonds_numeric]
+    bond_lengths_mean = [np.mean(x) for x in tqdm(bond_lengths)]
+    bond_lengths_std = [np.std(x) for x in tqdm(bond_lengths)]
+    n_bonds = [len(x) for x in tqdm(bonds_numeric)]
 
     bond_data = {"n_bonds": n_bonds,
                  "bond_lengths_mean": bond_lengths_mean,

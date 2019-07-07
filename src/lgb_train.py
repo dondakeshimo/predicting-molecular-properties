@@ -37,7 +37,7 @@ def train_lgb_model(
         model.fit(
             X_train, y_train,
             eval_set=[(X_train, y_train), (X_valid, y_valid)],
-            eval_metric=group_mean_log_mae,
+            eval_metric=eval_metric,
             verbose=verbose,
             early_stopping_rounds=early_stopping_rounds)
 
@@ -45,7 +45,8 @@ def train_lgb_model(
         y_pred = model.predict(X_test, num_iteration=model.best_iteration_)
 
         oof[valid_index] = y_pred_valid.reshape(-1,)
-        scores.append(group_mean_log_mae(y_valid, y_pred_valid))
+        scores.append(
+            group_mean_log_mae(y_valid, y_pred_valid, X_valid["type"]))
 
         prediction += y_pred
 
