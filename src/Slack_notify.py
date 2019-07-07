@@ -2,8 +2,8 @@ import slackweb
 
 
 def post(text="かみまみた"):
-    with open("../") as f:
+    with open("../slack_url.txt") as f:
         url = f.read()
 
     slack = slackweb.Slack(url=url)
-    slack.notify(text)
+    slack.notify(text=text)
