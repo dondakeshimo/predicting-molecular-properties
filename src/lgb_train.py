@@ -89,3 +89,54 @@ def train_lgb_model(
         result_dict["feature_importance"] = feature_importance
 
     return result_dict
+
+
+def search_feature_importance(
+        X, y, params, folds, model_type="lgb", eval_metric="mae",
+        plot_feature_importance=False, model=None,
+        verbose=10000, early_stopping_rounds=200, n_estimators=50000):
+    columns = X.columns
+    result_dict = {}
+    scores = []
+    feature_importance = pd.DataFrame()
+
+    for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
+        print("--------------------------------------------------------------")
+        print(f"Fold {fold_n + 1} started at {time.ctime()}")
+        if type(X) == np.ndarray:
+            X_train, X_valid = X[train_index], X[valid_index]
+            y_train, y_valid = y[train_index], y[valid_index]
+        else:
+            X_train, X_valid = X.iloc[train_index], X.iloc[valid_index]
+            y_train, y_valid = y.iloc[train_index], y.iloc[valid_index]
+
+        model = lgb.LGBMRegressor(
+            **params, n_estimators=n_estimators, n_jobs=-1)
+        model.fit(
+            X_train, y_train,
+            eval_set=[(X_train, y_train), (X_valid, y_valid)],
+            eval_metric=eval_metric,
+            verbose=verbose,
+            early_stopping_rounds=early_stopping_rounds)
+
+        y_pred_valid = model.predict(X_valid)
+
+        scores.append(
+            group_mean_log_mae(y_valid, y_pred_valid, X_valid["type"]))
+
+        if model_type == "lgb" and plot_feature_importance:
+            fold_importance = pd.DataFrame()
+            fold_importance["feature"] = columns
+            fold_importance["importance"] = model.feature_importances_
+            fold_importance["fold"] = fold_n + 1
+            feature_importance = pd.concat(
+                [feature_importance, fold_importance], axis=0)
+
+    print("CV mean score: {0:.4f}, std: {1:.4f}.".format(
+        np.mean(scores), np.std(scores)))
+
+    if plot_feature_importance:
+        feature_importance["importance"] /= folds.n_splits
+        result_dict["feature_importance"] = feature_importance
+
+    return result_dict

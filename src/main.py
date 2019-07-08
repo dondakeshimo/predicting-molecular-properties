@@ -22,7 +22,7 @@ def load_n_preprocess_data(file_folder, init_flag=False):
         return train, test
 
 
-def train_full_with_lgb(X, X_test, y, folds):
+def train_full_with_lgb(X, y, folds):
     params = {"num_leaves": 128,
               "min_child_samples": 79,
               "objective": "regression",
@@ -39,8 +39,8 @@ def train_full_with_lgb(X, X_test, y, folds):
               "colsample_bytree": 1.0
               }
 
-    result_dict_lgb = lgb_train.train_lgb_model(
-        X=X, X_test=X_test, y=y, params=params, folds=folds, model_type="lgb",
+    result_dict_lgb = lgb_train.search_feature_importance(
+        X=X, y=y, params=params, folds=folds, model_type="lgb",
         eval_metric="group_mae", plot_feature_importance=True,
         verbose=300, early_stopping_rounds=1000, n_estimators=3000)
 
@@ -132,14 +132,13 @@ def main_importance(args):
 
     X = train[full_columns].copy()
     y = train["scalar_coupling_constant"]
-    X_test = test[full_columns].copy()
 
     del train, test
 
     n_fold = 3
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
 
-    result_dict_lgb = train_full_with_lgb(X, X_test, y, folds)
+    result_dict_lgb = train_full_with_lgb(X, y, folds)
 
     result_dict_lgb["feature_importance"].to_csv(
         f"{file_folder}/preprocessed/feature_importance.csv", index=False)

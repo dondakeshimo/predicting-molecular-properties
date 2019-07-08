@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
+import utils
 
 
 def map_atom_info(df, structures, atom_idx):
@@ -297,24 +298,25 @@ def create_feature_importance(train, test, structures, contrib):
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
 
+    train = train.sample(frac=0.5).reset_index(drop=True)
+
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)
-    test = map_atom_info(test, structures, 0)
-    test = map_atom_info(test, structures, 1)
 
     train = calc_dist(train)
-    test = calc_dist(test)
 
     train["type_0"] = train["type"].apply(lambda x: x[0])
-    test["type_0"] = test["type"].apply(lambda x: x[0])
+
+    utils.show_mem_usage(train)
 
     train = create_features_full(train)
-    test = create_features_full(test)
 
-    full_columns = train.drop(
-        ["id", "scalar_coupling_constant", "molecule_name",
-         "fc", "dso", "sd", "pso"], axis=1).columns
+    utils.show_mem_usage(train)
 
-    train, test = encode_str(train, test, full_columns)
+    print("Encoding strings")
+    for f in ["atom_0", "atom_1", "type_0", "type"]:
+        lbl = LabelEncoder()
+        lbl.fit(list(train[f].values))
+        train[f] = lbl.transform(list(train[f].values))
 
     return train, test
