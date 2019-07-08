@@ -298,7 +298,7 @@ def create_feature_importance(train, test, structures, contrib):
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
 
-    train = train.sample(frac=0.5).reset_index(drop=True)
+    train = train.sample(frac=0.01).reset_index(drop=True)
 
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)

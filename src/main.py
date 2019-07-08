@@ -39,12 +39,25 @@ def train_full_with_lgb(X, y, folds):
               "colsample_bytree": 1.0
               }
 
-    result_dict_lgb = lgb_train.search_feature_importance(
-        X=X, y=y, params=params, folds=folds, model_type="lgb",
-        eval_metric="group_mae", plot_feature_importance=True,
-        verbose=300, early_stopping_rounds=1000, n_estimators=3000)
+    X_short = pd.DataFrame(
+        {"ind": list(X.index),
+         "type": X["type"].values,
+         "oof": [0] * len(X),
+         "target": y.values})
+    feature_importance_list = []
 
-    return result_dict_lgb
+    for t in X["type"].unique():
+        print("==============================================================")
+        print(f"Training of type {t}")
+        X_t = X.loc[X["type"] == t]
+        y_t = X_short.loc[X_short["type"] == t, "target"]
+        result_dict_lgb = lgb_train.search_feature_importance(
+            X=X_t, y=y_t, params=params, folds=folds, model_type="lgb",
+            eval_metric="group_mae", plot_feature_importance=True,
+            verbose=3, early_stopping_rounds=1000, n_estimators=3)
+        feature_importance_list.append(result_dict_lgb["feature_importance"])
+
+    return {"feature_importance": pd.concat(feature_importance_list)}
 
 
 def train_each_type_with_lgb(X, X_test, y, folds):
