@@ -1,5 +1,4 @@
 import argparse
-import os
 import pandas as pd
 import preprocess
 from sklearn.model_selection import KFold
@@ -10,19 +9,17 @@ import nn_train
 
 
 def load_n_preprocess_data(file_folder, init_flag=False):
-    if not init_flag and \
-       os.path.exists(f"{file_folder}/preprocessed/train.pickle") and \
-       os.path.exists(f"{file_folder}/preprocessed/train.pickle"):
-        return handle_files.load_data_from_pickle(file_folder)
+    if not init_flag and handle_files.is_serialized_data(file_folder):
+        return handle_files.load_data_from_feather(file_folder)
     else:
         train, test, structures, contrib = \
             handle_files.load_data_from_csv(file_folder)
         train, test = preprocess.preprocess(train, test, structures, contrib)
-        handle_files.dump_data_as_pickle(train, test)
+        handle_files.dump_data_as_feather(file_folder, train, test)
         return train, test
 
 
-def train_full_with_lgb(X, X_test, y, folds):
+def train_full_with_lgb(X, y, folds):
     params = {"num_leaves": 128,
               "min_child_samples": 79,
               "objective": "regression",
@@ -39,12 +36,25 @@ def train_full_with_lgb(X, X_test, y, folds):
               "colsample_bytree": 1.0
               }
 
-    result_dict_lgb = lgb_train.train_lgb_model(
-        X=X, X_test=X_test, y=y, params=params, folds=folds, model_type="lgb",
-        eval_metric="group_mae", plot_feature_importance=True,
-        verbose=300, early_stopping_rounds=1000, n_estimators=3000)
+    X_short = pd.DataFrame(
+        {"ind": list(X.index),
+         "type": X["type"].values,
+         "oof": [0] * len(X),
+         "target": y.values})
+    feature_importance_list = []
 
-    return result_dict_lgb
+    for t in X["type"].unique():
+        print("==============================================================")
+        print(f"Training of type {t}")
+        X_t = X.loc[X["type"] == t]
+        y_t = X_short.loc[X_short["type"] == t, "target"]
+        result_dict_lgb = lgb_train.search_feature_importance(
+            X=X_t, y=y_t, params=params, folds=folds, model_type="lgb",
+            eval_metric="group_mae", plot_feature_importance=True,
+            verbose=300, early_stopping_rounds=1000, n_estimators=3000)
+        feature_importance_list.append(result_dict_lgb["feature_importance"])
+
+    return {"feature_importance": pd.concat(feature_importance_list)}
 
 
 def train_each_type_with_lgb(X, X_test, y, folds):
@@ -132,14 +142,13 @@ def main_importance(args):
 
     X = train[full_columns].copy()
     y = train["scalar_coupling_constant"]
-    X_test = test[full_columns].copy()
 
     del train, test
 
     n_fold = 3
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
 
-    result_dict_lgb = train_full_with_lgb(X, X_test, y, folds)
+    result_dict_lgb = train_full_with_lgb(X, y, folds)
 
     result_dict_lgb["feature_importance"].to_csv(
         f"{file_folder}/preprocessed/feature_importance.csv", index=False)
@@ -147,7 +156,7 @@ def main_importance(args):
 
 def main_fc(args):
     file_folder = args.input_dir
-    init_flag = args.init_pickle_flag
+    init_flag = args.init_feather_flag
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -174,7 +183,7 @@ def main_fc(args):
 
 def main_lgb(args):
     file_folder = args.input_dir
-    init_flag = args.init_pickle_flag
+    init_flag = args.init_feather_flag
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -211,7 +220,7 @@ def main_lgb(args):
 
 def main_nn(args):
     file_folder = args.input_dir
-    init_flag = args.init_pickle_flag
+    init_flag = args.init_feather_flag
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -269,7 +278,7 @@ if __name__ == "__main__":
         description="predict molecular properties")
     parser.add_argument("-m", "--mode", help="nn", default="nn")
     parser.add_argument("-i", "--input_dir", help="../data", default="../data")
-    parser.add_argument("--init_pickle_flag", action="store_true")
+    parser.add_argument("--init_feather_flag", action="store_true")
     parser.add_argument("--nn_epochs", default=20)
     parser.add_argument("--lgb_estimators", default=20)
     parser.add_argument("--oof_fc_flag", action="store_true")

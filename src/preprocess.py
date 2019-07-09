@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
+import utils
 
 
 def map_atom_info(df, structures, atom_idx):
@@ -73,7 +74,6 @@ def create_features_full(df):
 
                 df[col + "__diff"] = df[col] - df[num_col]
 
-                df[col + "__div"] = df[col] / df[num_col]
                 df[col + "__div"] = df[col] / df[num_col].replace(0, 1e-10)
 
     return df
@@ -133,14 +133,19 @@ def create_extra_features(df, good_columns):
     return df
 
 
-def get_good_columns(file_folder="../data", col_num=50):
+def get_good_columns(file_folder="../data"):
     print(f"Get good columns from {file_folder}/preprocessed/feat...ance.csv")
     importance = pd.read_csv(
         f"{file_folder}/preprocessed/feature_importance.csv")
-    importance = \
-        importance.groupby(["feature"]).mean() \
-        .sort_values(by=["importance"], ascending=False)
-    good_columns = list(importance.index.values)[:col_num]
+    span = len(importance) // 8
+    importance_set = set()
+    for i in range(8):
+        for column in importance.iloc[span * i:span * (i + 1)] \
+                      .groupby(["feature"]).mean() \
+                      .sort_values(by=["importance"], ascending=False) \
+                      .index[:50]:
+            importance_set.add(column)
+    good_columns = list(importance_set)
     good_columns.append("type")
     return good_columns
 
@@ -297,24 +302,25 @@ def create_feature_importance(train, test, structures, contrib):
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
 
+    train = train.sample(frac=0.5).reset_index(drop=True)
+
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)
-    test = map_atom_info(test, structures, 0)
-    test = map_atom_info(test, structures, 1)
 
     train = calc_dist(train)
-    test = calc_dist(test)
 
     train["type_0"] = train["type"].apply(lambda x: x[0])
-    test["type_0"] = test["type"].apply(lambda x: x[0])
+
+    utils.show_mem_usage(train)
 
     train = create_features_full(train)
-    test = create_features_full(test)
 
-    full_columns = train.drop(
-        ["id", "scalar_coupling_constant", "molecule_name",
-         "fc", "dso", "sd", "pso"], axis=1).columns
+    utils.show_mem_usage(train)
 
-    train, test = encode_str(train, test, full_columns)
+    print("Encoding strings")
+    for f in ["atom_0", "atom_1", "type_0", "type"]:
+        lbl = LabelEncoder()
+        lbl.fit(list(train[f].values))
+        train[f] = lbl.transform(list(train[f].values))
 
     return train, test
