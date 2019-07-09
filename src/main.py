@@ -1,5 +1,4 @@
 import argparse
-import os
 import pandas as pd
 import preprocess
 from sklearn.model_selection import KFold
@@ -10,9 +9,7 @@ import nn_train
 
 
 def load_n_preprocess_data(file_folder, init_flag=False):
-    if not init_flag and \
-       os.path.exists(f"{file_folder}/preprocessed/train.pickle") and \
-       os.path.exists(f"{file_folder}/preprocessed/train.pickle"):
+    if not init_flag and handle_files.is_serialized_data(file_folder):
         return handle_files.load_data_from_feather(file_folder)
     else:
         train, test, structures, contrib = \

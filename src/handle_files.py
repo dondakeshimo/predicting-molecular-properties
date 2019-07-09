@@ -1,5 +1,13 @@
+import os
 import pandas as pd
 import pickle
+
+
+def is_serialized_data(file_folder):
+    is_train = os.path.exists(f"{file_folder}/preprocessed/train.feather")
+    is_test = os.path.exists(f"{file_folder}/preprocessed/test.feather")
+
+    return is_train and is_test
 
 
 def load_data_from_pickle(file_folder):
