@@ -156,7 +156,7 @@ def main_importance(args):
 
 def main_fc(args):
     file_folder = args.input_dir
-    init_flag = args.init_pickle_flag
+    init_flag = args.init_feather_flag
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -183,7 +183,7 @@ def main_fc(args):
 
 def main_lgb(args):
     file_folder = args.input_dir
-    init_flag = args.init_pickle_flag
+    init_flag = args.init_feather_flag
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -220,7 +220,7 @@ def main_lgb(args):
 
 def main_nn(args):
     file_folder = args.input_dir
-    init_flag = args.init_pickle_flag
+    init_flag = args.init_feather_flag
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -278,7 +278,7 @@ if __name__ == "__main__":
         description="predict molecular properties")
     parser.add_argument("-m", "--mode", help="nn", default="nn")
     parser.add_argument("-i", "--input_dir", help="../data", default="../data")
-    parser.add_argument("--init_pickle_flag", action="store_true")
+    parser.add_argument("--init_feather_flag", action="store_true")
     parser.add_argument("--nn_epochs", default=20)
     parser.add_argument("--lgb_estimators", default=20)
     parser.add_argument("--oof_fc_flag", action="store_true")

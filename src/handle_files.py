@@ -22,12 +22,9 @@ def load_data_from_pickle(file_folder):
 
 
 def load_data_from_feather(file_folder):
-    print(f"load data from {file_folder}/preprocessed/train.pickle")
-    with open(f"{file_folder}/preprocessed/train.pickle", "rb") as f:
-        train = pickle.load(f)
-
-    with open(f"{file_folder}/preprocessed/test.pickle", "rb") as f:
-        test = pickle.load(f)
+    print(f"load data from {file_folder}/preprocessed/train.feather")
+    train = pd.read_feather(f"{file_folder}/preprocessed/train.feather")
+    test = pd.read_feather(f"{file_folder}/preprocessed/test.feather")
 
     return train, test
 
