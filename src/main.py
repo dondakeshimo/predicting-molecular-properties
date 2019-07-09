@@ -13,12 +13,12 @@ def load_n_preprocess_data(file_folder, init_flag=False):
     if not init_flag and \
        os.path.exists(f"{file_folder}/preprocessed/train.pickle") and \
        os.path.exists(f"{file_folder}/preprocessed/train.pickle"):
-        return handle_files.load_data_from_pickle(file_folder)
+        return handle_files.load_data_from_feather(file_folder)
     else:
         train, test, structures, contrib = \
             handle_files.load_data_from_csv(file_folder)
         train, test = preprocess.preprocess(train, test, structures, contrib)
-        handle_files.dump_data_as_pickle(train, test)
+        handle_files.dump_data_as_feather(file_folder, train, test)
         return train, test
 
 
