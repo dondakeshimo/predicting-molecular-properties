@@ -54,7 +54,7 @@ def train_full_with_lgb(X, y, folds):
         result_dict_lgb = lgb_train.search_feature_importance(
             X=X_t, y=y_t, params=params, folds=folds, model_type="lgb",
             eval_metric="group_mae", plot_feature_importance=True,
-            verbose=3, early_stopping_rounds=1000, n_estimators=3)
+            verbose=300, early_stopping_rounds=1000, n_estimators=3000)
         feature_importance_list.append(result_dict_lgb["feature_importance"])
 
     return {"feature_importance": pd.concat(feature_importance_list)}

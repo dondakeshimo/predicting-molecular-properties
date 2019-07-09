@@ -74,7 +74,6 @@ def create_features_full(df):
 
                 df[col + "__diff"] = df[col] - df[num_col]
 
-                df[col + "__div"] = df[col] / df[num_col]
                 df[col + "__div"] = df[col] / df[num_col].replace(0, 1e-10)
 
     return df
@@ -134,14 +133,19 @@ def create_extra_features(df, good_columns):
     return df
 
 
-def get_good_columns(file_folder="../data", col_num=50):
+def get_good_columns(file_folder="../data"):
     print(f"Get good columns from {file_folder}/preprocessed/feat...ance.csv")
     importance = pd.read_csv(
         f"{file_folder}/preprocessed/feature_importance.csv")
-    importance = \
-        importance.groupby(["feature"]).mean() \
-        .sort_values(by=["importance"], ascending=False)
-    good_columns = list(importance.index.values)[:col_num]
+    span = len(importance) // 8
+    importance_set = set()
+    for i in range(8):
+        for column in importance.iloc[span * i:span * (i + 1)] \
+                      .groupby(["feature"]).mean() \
+                      .sort_values(by=["importance"], ascending=False) \
+                      .index[:50]:
+            importance_set.add(column)
+    good_columns = list(importance_set)
     good_columns.append("type")
     return good_columns
 
@@ -298,7 +302,7 @@ def create_feature_importance(train, test, structures, contrib):
     structures = get_atom_rad_en(structures)
     structures = calc_bonds(structures)
 
-    train = train.sample(frac=0.01).reset_index(drop=True)
+    train = train.sample(frac=0.5).reset_index(drop=True)
 
     train = map_atom_info(train, structures, 0)
     train = map_atom_info(train, structures, 1)
