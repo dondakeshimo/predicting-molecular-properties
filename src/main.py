@@ -91,7 +91,7 @@ def train_each_type_with_lgb(X, X_test, y, folds):
     return X_short, X_short_test
 
 
-def train_each_type_with_nn(X, X_test, y, folds):
+def train_each_type_with_nn(X, X_test, y, folds, epochs):
     X_short = pd.DataFrame(
         {"ind": list(X.index),
          "type": X["type"].values,
@@ -108,12 +108,12 @@ def train_each_type_with_nn(X, X_test, y, folds):
         X_test_t = X_test.loc[X_test["type"] == t]
         X_t, X_test_t = nn_train.fit_scale_data(X_t, X_test_t)
         y_t = X_short.loc[X_short["type"] == t, "target"].values
-        result_dict_lgb = nn_train.train_nn_model(
+        result_dict_nn = nn_train.train_nn_model(
             X=X_t, X_test=X_test_t, y=y_t, folds=folds,
-            verbose=1, epochs=10, batch_size=32)
-        X_short.loc[X_short["type"] == t, "oof"] = result_dict_lgb["oof"]
+            verbose=1, epochs=epochs, batch_size=32)
+        X_short.loc[X_short["type"] == t, "oof"] = result_dict_nn["oof"]
         X_short_test.loc[X_short_test["type"] == t, "prediction"] = \
-            result_dict_lgb["prediction"]
+            result_dict_nn["prediction"]
 
     return X_short, X_short_test
 
@@ -211,6 +211,7 @@ def main_lgb(args):
 def main_nn(args):
     file_folder = args.input_dir
     init_flag = args.init_pickle_flag
+    epochs = int(args.nn_epochs)
     train, test = load_n_preprocess_data(file_folder, init_flag)
 
     good_columns = preprocess.get_good_columns()
@@ -233,7 +234,7 @@ def main_nn(args):
     folds = KFold(n_splits=n_fold, shuffle=True, random_state=11)
 
     X_nn, X_nn_test = \
-        train_each_type_with_nn(X, X_test, y, folds)
+        train_each_type_with_nn(X, X_test, y, folds, epochs)
 
     df_train_oof_nn = pd.DataFrame({"train_oof_nn": X_nn["oof"]})
     df_nn_prediction = pd.DataFrame(
